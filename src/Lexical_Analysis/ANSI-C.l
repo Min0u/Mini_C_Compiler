@@ -7,7 +7,6 @@
 #include <string.h>
 #include "y.tab.h"
 
-extern YYSTYPE yylval;
 extern int yylineno;
 
 %}
@@ -20,7 +19,7 @@ comment \/\*([^*]|\*[^/])*\*\/
 
 {comment} { /* ignore les commentaires */ }
 
-{const} { yylval.number = strdup(yytext); return CONSTANT; }
+{const} { yylval.node = create_int_leaf(atoi(yytext)); return CONSTANT; }
 
 extern { return EXTERN; }
 int	{ return INT; }
@@ -56,10 +55,10 @@ sizeof { return SIZEOF; }
 \; { return ';'; }
 \, { return ','; }
 
-{id} { yylval.name = strdup(yytext); return IDENTIFIER; }
+{id} { yylval.node = create_id_leaf(strdup(yytext)); return IDENTIFIER; }
 
-[\t \v \f ]+ { /* ignore les espaces, tabulations, sauts de ligne, etc. */ }
-\n { }
+[\t \v \f ]+ { /* ignore spaces */ }
+\n { yylineno++; }
 
 . { printf("Error: unexpected character '%c'\n", yytext[0]); exit(1); }
 

@@ -1,82 +1,184 @@
 #include <stdio.h>
 #include "ast.h"
 
-ast_node *create_ast_node(int value, ast_type type, ast_node *left_child, ast_node *right_child)
+ast_node *ast_create_node(ast_type type)
 {
     ast_node *node = (ast_node *)malloc(sizeof(ast_node));
-    node->value = value;
     node->type = type;
-    node->left_child = left_child;
-    node->right_child = right_child;
+    node->childrens = NULL;
+    node->childrens_count = 0;
+    node->value = -1;
+    node->id = NULL;
+    
     return node;
 }
 
-void print_ast(ast_node *root)
+void ast_add_child(ast_node *parent, ast_node *child)
 {
-    if (root == NULL)
+    if (parent->childrens == NULL)
+    {
+        parent->childrens = (ast_node **)malloc(sizeof(ast_node *));
+    }
+    else
+    {
+        parent->childrens = (ast_node **)realloc(parent->childrens, sizeof(ast_node *) * (parent->childrens_count + 1));
+    }
+    
+    parent->childrens[parent->childrens_count] = child;
+    parent->childrens_count++;
+}
+
+ast_node *create_int_leaf(int value)
+{
+    ast_node *node = ast_create_node(AST_CONSTANT);
+    node->value = value;
+    return node;
+}
+
+ast_node *create_id_leaf(char *name)
+{
+    ast_node *node = ast_create_node(AST_IDENTIFIER);
+    node->id = name;
+    return node;
+}
+
+void print_complete_ast_helper(ast_node *node, int indent)
+{
+    if (node == NULL)
     {
         return;
     }
-    switch (root->type)
+
+    for (int i = 0; i < indent - 1; i++)
     {
-    case IDENTIFIER_NODE:
-        printf("IDENTIFIER_NODE: %d\n", root->value);
+        printf("    ");
+    }
+    if (indent > 0)
+    {
+        printf("└── ");
+    }
+
+    switch (node->type)
+    {
+    case AST_PROGRAM:
+        printf("Program\n");
         break;
-    case CONSTANT_NODE:
-        printf("CONSTANT_NODE: %d\n", root->value);
+    case AST_FUNCTION_DEFINITION:
+        printf("Function Definition\n");
         break;
-    case UNARY_EXPRESSION_NODE:
-        printf("UNARY_EXPRESSION_NODE: %d\n", root->value);
+    case AST_RETURN:
+        printf("Return\n");
         break;
-    case BINARY_EXPRESSION_NODE:
-        printf("BINARY_EXPRESSION_NODE: %d\n", root->value);
+    case AST_FOR:
+        printf("For\n");
         break;
-    case ASSIGNMENT_NODE:
-        printf("ASSIGNMENT_NODE: %d\n", root->value);
+    case AST_WHILE:
+        printf("While\n");
         break;
-    case FUNCTION_NODE:
-        printf("FUNCTION_NODE: %d\n", root->value);
+    case AST_IF:
+        printf("If\n");
         break;
-    case IF_ELSE_NODE:
-        printf("IF_ELSE_NODE: %d\n", root->value);
+    case AST_IF_ELSE:
+        printf("If Else\n");
         break;
-    case WHILE_NODE:
-        printf("WHILE_NODE: %d\n", root->value);
+    case AST_EXPRESSION_STATEMENT:
+        printf("Expression Statement\n");
         break;
-    case FOR_NODE:
-        printf("FOR_NODE: %d\n", root->value);
+    case AST_STATEMENT_LIST:
+        printf("Statement List\n");
         break;
-    case RETURN_NODE:
-        printf("RETURN_NODE: %d\n", root->value);
+    case AST_DECLARATION_LIST:
+        printf("Declaration List\n");
         break;
-    case COMPOUND_NODE:
-        printf("COMPOUND_NODE: %d\n", root->value);
+    case AST_COMPOUND_STATEMENT:
+        printf("Compound Statement\n");
         break;
-    case DECLARATION_NODE:
-        printf("DECLARATION_NODE: %d\n", root->value);
+    case AST_PARAMETER_DECLARATION:
+        printf("Parameter Declaration\n");
         break;
-    case TYPE_SPECIFIER_NODE:
-        printf("TYPE_SPECIFIER_NODE: %d\n", root->value);
+    case AST_PARAMETER_LIST:
+        printf("Parameter List\n");
         break;
-    case STRUCT_SPECIFIER_NODE:
-        printf("STRUCT_SPECIFIER_NODE: %d\n", root->value);
+    case AST_DIRECT_DECLARATOR:
+        printf("Direct Declarator\n");
         break;
-    case STRUCT_DECLARATION_NODE:
-        printf("STRUCT_DECLARATION_NODE: %d\n", root->value);
+    case AST_STRUCT_DECLARATION:
+        printf("Struct Declaration\n");
         break;
-    case DECLARATOR_NODE:
-        printf("DECLARATOR_NODE: %d\n", root->value);
+    case AST_STRUCT_DECLARATION_LIST:
+        printf("Struct Declaration List\n");
         break;
-    case PARAMETER_LIST_NODE:
-        printf("PARAMETER_LIST_NODE: %d\n", root->value);
+    case AST_STRUCT_SPECIFIER:
+        printf("Struct Specifier\n");
         break;
-    case PARAMETER_DECLARATION_NODE:
-        printf("PARAMETER_DECLARATION_NODE: %d\n", root->value);
+    case AST_TYPE_SPECIFIER:
+        printf("Type Specifier : %s\n", node->id);
         break;
-    case PROGRAM_NODE:
-        printf("PROGRAM_NODE: %d\n", root->value);
+    case AST_DECLARATION_SPECIFIERS:
+        printf("Declaration Specifiers\n");
+        break;
+    case AST_DECLARATION:
+        printf("Declaration\n");
+        break;
+    case AST_ASSIGNMENT:
+        printf("Assignment\n");
+        break;
+    case AST_LOGICAL_OR:
+        printf("Logical Or\n");
+        break;
+    case AST_LOGICAL_AND:
+        printf("Logical And\n");
+        break;
+    case AST_EQUALITY:
+        printf("Equality\n");
+        break;
+    case AST_RELATIONAL:
+        printf("Relational\n");
+        break;
+    case AST_ADDITIVE:
+        printf("Additive\n");
+        break;
+    case AST_MULTIPLICATIVE:
+        printf("Multiplicative\n");
+        break;
+    case AST_UNARY_OPERATOR:
+        printf("Unary Operator\n");
+        break;
+    case AST_UNARY:
+        printf("Unary\n");
+        break;
+    case AST_ARGUMENT_EXPRESSION_LIST:
+        printf("Argument Expression List\n");
+        break;
+    case AST_POSTFIX_EXPRESSION:
+        printf("Postfix Expression\n");
+        break;
+    case AST_CONSTANT:
+        printf("Constant : %d\n", node->value);
+        break;
+    case AST_IDENTIFIER:
+        printf("Identifier : %s\n", node->id);
+        break;
+    case AST_PRIMARY_EXPRESSION:
+        printf("Primary Expression\n");
+        break;
+    case AST_DECLARATOR:
+        printf("Declarator\n");
+        break;
+    default:
+        printf("Unknown\n");
         break;
     }
+
+    for (int i = 0; i < node->childrens_count; i++)
+    {
+        print_complete_ast_helper(node->childrens[i], indent + 1);
+    }
+}
+
+void print_complete_ast(ast_node *root)
+{
+    print_complete_ast_helper(root, 0);
 }
 
 void free_ast(ast_node *root)
@@ -85,7 +187,6 @@ void free_ast(ast_node *root)
     {
         return;
     }
-    free_ast(root->left_child);
-    free_ast(root->right_child);
+    free_ast(root->childrens);
     free(root);
 }

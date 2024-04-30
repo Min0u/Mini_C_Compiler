@@ -17,7 +17,7 @@ SOURCE_DIR_BE_LEX = src/Lexical_Analysis/ANSI-BE.l
 OUTPUT_DIR_FE = build/FE
 SOURCE_DIR_FE_YACC = src/Syntax_Analysis/structfe.y
 SOURCE_DIR_FE_LEX = src/Lexical_Analysis/ANSI-C.l
-ADDITIONAL_FE_FILES = src/Semantic_Analysis/ast.c src/Semantic_Analysis/code.c src/Semantic_Analysis/symbol_table.c src/Semantic_Analysis/error.c src/Semantic_Analysis/stack.c src/Semantic_Analysis/utils.c
+ADDITIONAL_FE_FILES = src/Semantic_Analysis/ast.c
 
 # Test
 TEST_DIR = Tests
@@ -65,7 +65,7 @@ build_dir_fe:
 # Test all files in the Test directory
 test:
 	@for file in $(TEST_FILES); do \
-		./$(OUTPUT_DIR_FE)/strucit_frontend < $$file > $(TEST_OUTPUT_DIR)/$$(basename $$file .c)_backend.c; \
+		./$(OUTPUT_DIR_FE)/strucit_frontend $$file; \
 		if [ $$? -eq 0 ]; then \
 			echo "\033[0;32m$$file : success\033[0m"; \
 		else \
@@ -79,7 +79,7 @@ test:
 # Test a specific file
 test_file:
 	@read -p "Enter the file name (ex: ./Tests/test.c) : " file; \
-	./$(OUTPUT_DIR_FE)/strucit_frontend < $$file > $(TEST_OUTPUT_DIR)/$$(basename $$file .c)_backend.c; \
+	./$(OUTPUT_DIR_FE)/strucit_frontend $$file; \
 	if [ $$? -eq 0 ]; then \
 		echo "\033[0;32m$$file : success\033[0m"; \
 	else \
@@ -95,7 +95,7 @@ test_file:
 # Check memory leaks
 valgrind_test:
 	@for file in $(TEST_FILES); do \
-		$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend < $$file > $(TEST_OUTPUT_DIR)/$$(basename $$file .c)_backend.c $(HEAD); \
+		$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend $$file; \
 		if [ $$? -eq 0 ]; then \
 			echo "\033[0;32m$$file : success\033[0m"; \
 		else \
@@ -109,7 +109,7 @@ valgrind_test:
 # Check memory leaks for a specific file
 valgrind_test_file:
 	@read -p "Enter the file name (ex: ./Tests/test.c) : " file; \
-	$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend < $$file > $(TEST_OUTPUT_DIR)/$$(basename $$file .c)_backend.c $(HEAD); \
+	$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend $$file; \
 	if [ $$? -eq 0 ]; then \
 		echo "\033[0;32m$$file : success\033[0m"; \
 	else \

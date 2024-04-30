@@ -7,37 +7,62 @@
 
 typedef enum _ast_type
 {
-    IDENTIFIER_NODE,
-    CONSTANT_NODE,
-    UNARY_EXPRESSION_NODE,
-    BINARY_EXPRESSION_NODE,
-    ASSIGNMENT_NODE,
-    FUNCTION_NODE,
-    IF_ELSE_NODE,
-    WHILE_NODE,
-    FOR_NODE,
-    RETURN_NODE,
-    COMPOUND_NODE,
-    DECLARATION_NODE,
-    TYPE_SPECIFIER_NODE,
-    STRUCT_SPECIFIER_NODE,
-    STRUCT_DECLARATION_NODE,
-    DECLARATOR_NODE,
-    PARAMETER_LIST_NODE,
-    PARAMETER_DECLARATION_NODE,
-    PROGRAM_NODE,
+    AST_PROGRAM,
+    AST_FUNCTION_DEFINITION,
+    AST_RETURN,
+    AST_FOR,
+    AST_WHILE,
+    AST_IF,
+    AST_IF_ELSE,
+    AST_EXPRESSION_STATEMENT,
+    AST_STATEMENT_LIST,
+    AST_DECLARATION_LIST,
+    AST_COMPOUND_STATEMENT,
+    AST_PARAMETER_DECLARATION,
+    AST_PARAMETER_LIST,
+    AST_DIRECT_DECLARATOR,
+    AST_STRUCT_DECLARATION,
+    AST_STRUCT_DECLARATION_LIST,
+    AST_STRUCT_SPECIFIER,
+    AST_TYPE_SPECIFIER,
+    AST_DECLARATION_SPECIFIERS,
+    AST_DECLARATION,
+    AST_ASSIGNMENT,
+    AST_LOGICAL_OR,
+    AST_LOGICAL_AND,
+    AST_EQUALITY,
+    AST_RELATIONAL,
+    AST_ADDITIVE,
+    AST_MULTIPLICATIVE,
+    AST_UNARY_OPERATOR,
+    AST_UNARY,
+    AST_ARGUMENT_EXPRESSION_LIST,
+    AST_POSTFIX_EXPRESSION,
+    AST_CONSTANT,
+    AST_IDENTIFIER,
+    AST_PRIMARY_EXPRESSION,
+    AST_DECLARATOR,
 } ast_type;
 
 typedef struct _ast_node
 {
-    int value;
     ast_type type;
-    struct _ast_node *left_child;
-    struct _ast_node *right_child;
+    struct _ast_node **childrens;
+    int childrens_count;
+    int value;
+    char *id;
 } ast_node;
 
-ast_node *create_ast_node(int value, ast_type type, ast_node *left_child, ast_node *right_child);
-void print_ast(ast_node *root);
+ast_node *ast_create_node(ast_type type);
+
+void ast_add_child(ast_node *parent, ast_node *child);
+
+ast_node *create_int_leaf(int value);
+ast_node *create_id_leaf(char *name);
+
+void print_complete_ast(ast_node *root);
+void print_complete_ast_helper(ast_node *node, int indent);
+
 void free_ast(ast_node *root);
 
 #endif
