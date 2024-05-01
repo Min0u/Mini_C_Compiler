@@ -63,6 +63,9 @@ void print_complete_ast_helper(ast_node *node, int indent)
     case AST_PROGRAM:
         printf("Program\n");
         break;
+    case AST_PROGRAM_EXT:
+        printf("Program Ext\n");
+        break;
     case AST_FUNCTION_DEFINITION:
         printf("Function Definition\n");
         break;
@@ -132,17 +135,47 @@ void print_complete_ast_helper(ast_node *node, int indent)
     case AST_EQUALITY:
         printf("Equality\n");
         break;
-    case AST_RELATIONAL:
-        printf("Relational\n");
+    case AST_NEQUALITY:
+        printf("Not Equality\n");
+        break;
+    case AST_LE_RELATIONAL:
+        printf("Less or Equal Relational\n");
+        break;
+    case AST_GE_RELATIONAL:
+        printf("Greater or Equal Relational\n");
+        break;
+    case AST_L_RELATIONAL:
+        printf("Less Relational\n");
+        break;
+    case AST_G_RELATIONAL:
+        printf("Greater Relational\n");
         break;
     case AST_ADDITIVE:
         printf("Additive\n");
         break;
+    case AST_SUBSTRACTIVE:
+        printf("Subtractive\n");
+        break;
     case AST_MULTIPLICATIVE:
         printf("Multiplicative\n");
         break;
+    case AST_DIVISION:
+        printf("Division\n");
+        break;
     case AST_UNARY_OPERATOR:
         printf("Unary Operator\n");
+        break;
+    case AST_UNARY_AND_OPERATOR:
+        printf("Unary And Operator\n");
+        break;
+    case AST_UNARY_STAR_OPERATOR:
+        printf("Unary Star Operator\n");
+        break;
+    case AST_UNARY_MINUS_OPERATOR:
+        printf("Unary Minus Operator\n");
+        break;
+    case AST_UNARY_SIZEOF:
+        printf("Unary Sizeof\n");
         break;
     case AST_UNARY:
         printf("Unary\n");
@@ -150,8 +183,17 @@ void print_complete_ast_helper(ast_node *node, int indent)
     case AST_ARGUMENT_EXPRESSION_LIST:
         printf("Argument Expression List\n");
         break;
-    case AST_POSTFIX_EXPRESSION:
-        printf("Postfix Expression\n");
+    case AST_POSTFIX_POINTER:
+        printf("Postfix Pointer\n");
+        break;
+    case AST_POSTFIX_IDENTIFIER:
+        printf("Postfix Identifier\n");
+        break;
+    case AST_POSTFIX_ARGUMENT:
+        printf("Postfix Argument\n");
+        break;
+    case AST_POSTFIX_NO_ARGUMENT:
+        printf("Postfix No Argument\n");
         break;
     case AST_CONSTANT:
         printf("Constant : %d\n", node->value);
@@ -164,6 +206,12 @@ void print_complete_ast_helper(ast_node *node, int indent)
         break;
     case AST_DECLARATOR:
         printf("Declarator\n");
+        break;
+    case AST_STAR_DECLARATOR:
+        printf("Star Declarator\n");
+        break;
+    case AST_STRUCT_VARIABLE_SPECIFIER:
+        printf("Struct Variable Specifier\n");
         break;
     default:
         printf("Unknown\n");

@@ -1,4 +1,4 @@
-kkk/* Description d'une liste chainee */
+/* Description d'une liste chainee */
 extern int printd( int i );
 
 

@@ -17,6 +17,7 @@
 
 extern int yylineno;
 extern FILE *yyin;
+extern FILE *yyout;
 int yylex();
 
 int yyerror(const char *s ) 
@@ -54,7 +55,7 @@ exit(SYNTAX_ERROR);
 %nonassoc ELSE_PRIORITY
 %nonassoc ELSE
 
-%start program
+%start main
 
 %%
 
@@ -81,24 +82,24 @@ postfix_expression
         }
         | postfix_expression '(' ')'
         {
-                $$ = ast_create_node(AST_POSTFIX_EXPRESSION);
+                $$ = ast_create_node(AST_POSTFIX_NO_ARGUMENT);
                 ast_add_child($$, $1);
         }
         | postfix_expression '(' argument_expression_list ')'
         {
-                $$ = ast_create_node(AST_POSTFIX_EXPRESSION);
+                $$ = ast_create_node(AST_POSTFIX_ARGUMENT);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
         }
         | postfix_expression '.' IDENTIFIER
         {
-                $$ = ast_create_node(AST_POSTFIX_EXPRESSION);
+                $$ = ast_create_node(AST_POSTFIX_IDENTIFIER);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
         }
         | postfix_expression PTR_OP IDENTIFIER
         {
-                $$ = ast_create_node(AST_POSTFIX_EXPRESSION);
+                $$ = ast_create_node(AST_POSTFIX_POINTER);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
         }
@@ -130,7 +131,7 @@ unary_expression
         }
         | SIZEOF unary_expression
         {
-                $$ = ast_create_node(AST_UNARY);
+                $$ = ast_create_node(AST_UNARY_SIZEOF);
                 ast_add_child($$, $2);
         }
         ;
@@ -138,15 +139,15 @@ unary_expression
 unary_operator
         : '&'
         {
-                $$ = ast_create_node(AST_UNARY_OPERATOR);
+                $$ = ast_create_node(AST_UNARY_AND_OPERATOR);
         }
         | '*'
         {
-                $$ = ast_create_node(AST_UNARY_OPERATOR);
+                $$ = ast_create_node(AST_UNARY_STAR_OPERATOR);
         }
         | '-'
         {
-                $$ = ast_create_node(AST_UNARY_OPERATOR);
+                $$ = ast_create_node(AST_UNARY_MINUS_OPERATOR);
 
         }
         ;
@@ -164,7 +165,7 @@ multiplicative_expression
         }
         | multiplicative_expression '/' unary_expression
         {
-                $$ = ast_create_node(AST_MULTIPLICATIVE);
+                $$ = ast_create_node(AST_DIVISION);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
         }
@@ -183,7 +184,7 @@ additive_expression
         }
         | additive_expression '-' multiplicative_expression
         {
-                $$ = ast_create_node(AST_ADDITIVE);
+                $$ = ast_create_node(AST_SUBSTRACTIVE);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
         }
@@ -196,26 +197,26 @@ relational_expression
         }
         | relational_expression '<' additive_expression
         {
-                $$ = ast_create_node(AST_RELATIONAL);
+                $$ = ast_create_node(AST_L_RELATIONAL);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
 
         }
         | relational_expression '>' additive_expression
         {
-                $$ = ast_create_node(AST_RELATIONAL);
+                $$ = ast_create_node(AST_G_RELATIONAL);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
         }
         | relational_expression LE_OP additive_expression
         {
-                $$ = ast_create_node(AST_RELATIONAL);
+                $$ = ast_create_node(AST_LE_RELATIONAL);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
         }
         | relational_expression GE_OP additive_expression
         {
-                $$ = ast_create_node(AST_RELATIONAL);
+                $$ = ast_create_node(AST_GE_RELATIONAL);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
         }
@@ -234,7 +235,7 @@ equality_expression
         }
         | equality_expression NE_OP relational_expression
         {
-                $$ = ast_create_node(AST_EQUALITY);
+                $$ = ast_create_node(AST_NEQUALITY);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
         }
@@ -310,35 +311,38 @@ type_specifier
         {
                 $$ = ast_create_node(AST_TYPE_SPECIFIER);
 
-                $$->id = "void";
+                $$->id = "void ";
         }
         | INT
         {
                 $$ = ast_create_node(AST_TYPE_SPECIFIER);
 
-                $$->id = "int";
+                $$->id = "int ";
         }
         | struct_specifier
         {
                 $$ = ast_create_node(AST_TYPE_SPECIFIER);
                 ast_add_child($$, $1);
 
-                $$->id = "struct";
+                $$->id = "struct ";
         }
         ;
 
 struct_specifier
         : STRUCT IDENTIFIER '{' struct_declaration_list '}'
         {
-                $$ = $4;
+                $$ = ast_create_node(AST_STRUCT_VARIABLE_SPECIFIER);
+                ast_add_child($$, $2);
+                ast_add_child($$, $4);
         }
         | STRUCT '{' struct_declaration_list '}'
         {
-                $$ = $3;
+                $$ = ast_create_node(AST_STRUCT_SPECIFIER);
+                ast_add_child($$, $3);
         }
         | STRUCT IDENTIFIER
         {
-                $$ = ast_create_node(AST_STRUCT_SPECIFIER);
+                $$ = $2;
         }
         ;
 
@@ -367,7 +371,8 @@ struct_declaration
 declarator
         : '*' direct_declarator
         {
-                $$ = $2;
+                $$ = ast_create_node(AST_STAR_DECLARATOR);
+                ast_add_child($$, $2);
         }
         | direct_declarator
         {
@@ -382,12 +387,14 @@ direct_declarator
         }
         | '(' declarator ')'
         {
-                $$ = ast_create_node(AST_DIRECT_DECLARATOR);
+                $$ = ast_create_node(AST_DECLARATOR);
                 ast_add_child($$, $2);
         }
         | direct_declarator '(' parameter_list ')'
         {
                 $$ = ast_create_node(AST_DIRECT_DECLARATOR);
+                ast_add_child($$, $1);
+                ast_add_child($$, $3);
         }
         | direct_declarator '(' ')'
         {
@@ -497,7 +504,8 @@ expression_statement
         }
         | expression ';'
         {
-                $$ = $1;
+                $$ = ast_create_node(AST_EXPRESSION_STATEMENT);
+                ast_add_child($$, $1);
         }
         ;
 
@@ -530,6 +538,7 @@ iteration_statement
                 ast_add_child($$, $3);
                 ast_add_child($$, $4);
                 ast_add_child($$, $5);
+                ast_add_child($$, $7);
         }
         ;
 
@@ -548,17 +557,30 @@ jump_statement
 program
         : external_declaration
         {
-                $$ = $1;
-                print_complete_ast($$);
-                free_ast($$);
+                $$ = ast_create_node(AST_PROGRAM);
+                ast_add_child($$, $1);
+                print_complete_ast($1);
+
+                printf("Program1\n");
         }
         | program external_declaration
         {
-                $$ = ast_create_node(AST_PROGRAM);
-                ast_add_child($$, $1);
-                ast_add_child($$, $2);
-                print_complete_ast($$);
-                free_ast($$);
+                ast_add_child($1, $2);
+                $$ = $1;
+                print_complete_ast($2);
+
+                printf("Program2\n");
+        }
+        ;
+
+main
+        : program
+        {
+                printf("Main :(\n");
+                print_complete_ast($1);
+                write_code($1, yyout);
+                free_ast($1);
+                printf("Main :)\n");
         }
         ;
 
@@ -589,13 +611,16 @@ int main(int argc, char **argv)
 {
         if (argc < 2)
         {
-                fprintf(stderr, "Usage: %s <filename>\n", argv[0]);
+                fprintf(stderr, "Usage: %s <filename> <outputfile>\n", argv[0]);
                 return 1;
         }
 
         yyin = fopen(argv[1], "r");
 
+        yyout = fopen(argv[2], "w");
+
         yyparse();
 
         fclose(yyin);
-        }
+        fclose(yyout);
+}

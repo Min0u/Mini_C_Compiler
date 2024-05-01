@@ -17,7 +17,7 @@ SOURCE_DIR_BE_LEX = src/Lexical_Analysis/ANSI-BE.l
 OUTPUT_DIR_FE = build/FE
 SOURCE_DIR_FE_YACC = src/Syntax_Analysis/structfe.y
 SOURCE_DIR_FE_LEX = src/Lexical_Analysis/ANSI-C.l
-ADDITIONAL_FE_FILES = src/Semantic_Analysis/ast.c
+ADDITIONAL_FE_FILES = src/Semantic_Analysis/*.c
 
 # Test
 TEST_DIR = Tests
@@ -65,7 +65,7 @@ build_dir_fe:
 # Test all files in the Test directory
 test:
 	@for file in $(TEST_FILES); do \
-		./$(OUTPUT_DIR_FE)/strucit_frontend $$file; \
+		./$(OUTPUT_DIR_FE)/strucit_frontend $$file $(TEST_OUTPUT_DIR)/$$(basename $$file .c)_backend.c; \
 		if [ $$? -eq 0 ]; then \
 			echo "\033[0;32m$$file : success\033[0m"; \
 		else \
@@ -78,16 +78,13 @@ test:
 
 # Test a specific file
 test_file:
-	@read -p "Enter the file name (ex: ./Tests/test.c) : " file; \
-	./$(OUTPUT_DIR_FE)/strucit_frontend $$file; \
-	if [ $$? -eq 0 ]; then \
+	@read -p "Enter the file name (ex: ./Tests/test.c) and the output file name (ex: ./Tests/Output/test.c) : " file output; \
+	./$(OUTPUT_DIR_FE)/strucit_frontend $$file $$output
+
+	@if [ $$? -eq 0 ]; then \
 		echo "\033[0;32m$$file : success\033[0m"; \
 	else \
-		if [ $$? -eq 1 ]; then \
-			echo "\033[0;31m$$file : file does not exist\033[0m"; \
-		else \
-			echo "\033[0;31m$$file : error\033[0m"; \
-		fi; \
+		echo "\033[0;31m$$file : error\033[0m"; \
 	fi
 
 	@echo "\033[0;32mTest done\033[0m"
@@ -95,7 +92,7 @@ test_file:
 # Check memory leaks
 valgrind_test:
 	@for file in $(TEST_FILES); do \
-		$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend $$file; \
+		$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend $$file $(TEST_OUTPUT_DIR)/$$(basename $$file .c)_backend.c $(HEAD); \
 		if [ $$? -eq 0 ]; then \
 			echo "\033[0;32m$$file : success\033[0m"; \
 		else \
@@ -108,16 +105,12 @@ valgrind_test:
 
 # Check memory leaks for a specific file
 valgrind_test_file:
-	@read -p "Enter the file name (ex: ./Tests/test.c) : " file; \
-	$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend $$file; \
+	@read -p "Enter the file name (ex: ./Tests/test.c) and the output file name (ex: ./Tests/Output/test.c) : " file output; \
+	$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend $$file $$output $(HEAD); \
 	if [ $$? -eq 0 ]; then \
 		echo "\033[0;32m$$file : success\033[0m"; \
 	else \
-		if [ $$? -eq 1 ]; then \
-			echo "\033[0;31m$$file : file does not exist\033[0m"; \
-		else \
-			echo "\033[0;31m$$file : error\033[0m"; \
-		fi; \
+		echo "\033[0;31m$$file : error\033[0m"; \
 	fi
 
 	@echo "\033[0;32mValgrind test done\033[0m"
