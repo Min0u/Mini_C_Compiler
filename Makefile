@@ -1,6 +1,6 @@
 CC = gcc
 LEX = flex
-YACC = bison
+BISON = bison
 CFLAGS = -g -lfl -W -Wall -Wextra -Wpedantic
 
 # Valgrind : check memory leaks
@@ -39,7 +39,7 @@ $(OUTPUT_DIR_BE)/lex.yy.c: $(SOURCE_DIR_BE_LEX) | build_dir_be
 	$(LEX) -o $@ $<
 
 $(OUTPUT_DIR_BE)/y.tab.c: $(SOURCE_DIR_BE_YACC) | build_dir_be
-	$(YACC) -Wcounterexamples -o $@ -d $<
+	$(BISON) -Wcounterexamples -o $@ -d $<
 
 	@echo "\033[0;32mCompilation of the Back-End done\033[0m"
 
@@ -51,7 +51,7 @@ $(OUTPUT_DIR_FE)/lex.yy.c: $(SOURCE_DIR_FE_LEX) | build_dir_fe
 	$(LEX) -o $@ $<
 
 $(OUTPUT_DIR_FE)/y.tab.c: $(SOURCE_DIR_FE_YACC) | build_dir_fe
-	$(YACC) -Wcounterexamples -o $@ -d $<
+	$(BISON) -Wcounterexamples -o $@ -d $<
 
 	@echo "\033[0;32mCompilation of the Front-End done\033[0m"
 
@@ -67,9 +67,9 @@ test:
 	@for file in $(TEST_FILES); do \
 		./$(OUTPUT_DIR_FE)/strucit_frontend $$file $(TEST_OUTPUT_DIR)/$$(basename $$file .c)_backend.c; \
 		if [ $$? -eq 0 ]; then \
-			echo "\033[0;32m$$file : success\033[0m"; \
+			echo "\033[0;32msuccess\033[0m"; \
 		else \
-			echo "\033[0;31m$$file : error\033[0m"; \
+			echo "\033[0;31merror\033[0m"; \
 		fi; \
 		echo ""; \
 	done
@@ -82,21 +82,35 @@ test_file:
 	./$(OUTPUT_DIR_FE)/strucit_frontend $$file $$output
 
 	@if [ $$? -eq 0 ]; then \
-		echo "\033[0;32m$$file : success\033[0m"; \
+		echo "\033[0;32msuccess\033[0m"; \
 	else \
-		echo "\033[0;31m$$file : error\033[0m"; \
+		echo "\033[0;31merror\033[0m"; \
 	fi
 
 	@echo "\033[0;32mTest done\033[0m"
+
+// Test all outputs
+test_outputs:
+	@for file in $(TEST_FILES); do \
+		./$(OUTPUT_DIR_FE)/strucit_frontend $$file $(TEST_OUTPUT_DIR)/$$(basename $$file .c)_backend.c; \
+		if [ $$? -eq 0 ]; then \
+			echo "\033[0;32msuccess\033[0m"; \
+		else \
+			echo "\033[0;31merror\033[0m"; \
+		fi; \
+		echo ""; \
+	done
+
+	@echo "\033[0;32mAll outputs done\033[0m"
 
 # Check memory leaks
 valgrind_test:
 	@for file in $(TEST_FILES); do \
 		$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend $$file $(TEST_OUTPUT_DIR)/$$(basename $$file .c)_backend.c $(HEAD); \
 		if [ $$? -eq 0 ]; then \
-			echo "\033[0;32m$$file : success\033[0m"; \
+			echo "\033[0;32msuccess\033[0m"; \
 		else \
-			echo "\033[0;31m$$file : error\033[0m"; \
+			echo "\033[0;31merror\033[0m"; \
 		fi; \
 		echo ""; \
 	done
@@ -108,9 +122,9 @@ valgrind_test_file:
 	@read -p "Enter the file name (ex: ./Tests/test.c) and the output file name (ex: ./Tests/Output/test.c) : " file output; \
 	$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend $$file $$output $(HEAD); \
 	if [ $$? -eq 0 ]; then \
-		echo "\033[0;32m$$file : success\033[0m"; \
+		echo "\033[0;32msuccess\033[0m"; \
 	else \
-		echo "\033[0;31m$$file : error\033[0m"; \
+		echo "\033[0;31merror\033[0m"; \
 	fi
 
 	@echo "\033[0;32mValgrind test done\033[0m"
@@ -161,6 +175,7 @@ help:
 	@echo "- \033[0;34mstrucit_frontend\033[0m : compile the Front-End"
 	@echo "- \033[0;34mtest\033[0m : test all files in the Test directory"
 	@echo "- \033[0;34mtest_file\033[0m : test a specific file"
+	@echo "- \033[0;34mtest_outputs\033[0m : test all outputs"
 	@echo "- \033[0;34mvalgrind_test\033[0m : check memory leaks for all files in the Test directory"
 	@echo "- \033[0;34mvalgrind_test_file\033[0m : check memory leaks for a specific file"
 	@echo "- \033[0;34mmake_valgrind\033[0m : compile and check memory leaks for all files in the Test directory"

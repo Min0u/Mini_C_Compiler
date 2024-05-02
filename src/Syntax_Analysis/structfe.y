@@ -1,6 +1,7 @@
 %code requires 
 {
         #include "../../src/Semantic_Analysis/ast.h"
+        #include "../../src/Semantic_Analysis/code.h"
 }
 
 %code top 
@@ -55,7 +56,7 @@ exit(SYNTAX_ERROR);
 %nonassoc ELSE_PRIORITY
 %nonassoc ELSE
 
-%start main
+%start main_program
 
 %%
 
@@ -297,7 +298,7 @@ declaration
 declaration_specifiers
         : EXTERN type_specifier
         {
-                $$ = ast_create_node(AST_DECLARATION_SPECIFIERS);
+                $$ = ast_create_node(AST_EXT_DECLARATION);
                 ast_add_child($$, $2);
         }
         | type_specifier
@@ -311,20 +312,20 @@ type_specifier
         {
                 $$ = ast_create_node(AST_TYPE_SPECIFIER);
 
-                $$->id = "void ";
+                $$->id = "void";
         }
         | INT
         {
                 $$ = ast_create_node(AST_TYPE_SPECIFIER);
 
-                $$->id = "int ";
+                $$->id = "int";
         }
         | struct_specifier
         {
                 $$ = ast_create_node(AST_TYPE_SPECIFIER);
                 ast_add_child($$, $1);
 
-                $$->id = "struct ";
+                $$->id = "struct";
         }
         ;
 
@@ -554,36 +555,27 @@ jump_statement
         }
         ;
 
+main_program
+        : program
+        {
+                write_code($1, yyout);
+                free_ast($1);
+        }
+        ;
+
 program
         : external_declaration
         {
                 $$ = ast_create_node(AST_PROGRAM);
                 ast_add_child($$, $1);
-                print_complete_ast($1);
-
-                printf("Program1\n");
         }
         | program external_declaration
         {
                 ast_add_child($1, $2);
                 $$ = $1;
-                print_complete_ast($2);
-
-                printf("Program2\n");
         }
         ;
-
-main
-        : program
-        {
-                printf("Main :(\n");
-                print_complete_ast($1);
-                write_code($1, yyout);
-                free_ast($1);
-                printf("Main :)\n");
-        }
-        ;
-
+        
 external_declaration
         : function_definition
         {
@@ -616,10 +608,24 @@ int main(int argc, char **argv)
         }
 
         yyin = fopen(argv[1], "r");
+        if (yyin == NULL)
+        {
+                fprintf(stderr, "Cannot open file %s\n", argv[1]);
+                return 1;
+        }
 
         yyout = fopen(argv[2], "w");
+        if (yyout == NULL)
+        {
+                fprintf(stderr, "Cannot open file %s\n", argv[2]);
+                return 1;
+        }
+
+        printf("Parsing started :|\n");
 
         yyparse();
+
+        printf("Parsing done :)\n");
 
         fclose(yyin);
         fclose(yyout);

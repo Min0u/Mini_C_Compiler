@@ -62,6 +62,4 @@ sizeof { return SIZEOF; }
 
 . { printf("Error: unexpected character '%c'\n", yytext[0]); exit(1); }
 
-<<EOF>> { exit(0);}
-
 %%

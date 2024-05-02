@@ -23,31 +23,34 @@ void write_code(ast_node *node, FILE *file)
     switch (node->type)
     {
     case AST_PROGRAM:
-        write_code(node->childrens[0], file);
-        if (node->childrens[0]->type != AST_FUNCTION_DEFINITION)
+        for (int i = 0; i < node->childrens_count; i++)
         {
-            fprintf(file, ";\n\n");
-        }
-        else
-        {
-            fprintf(file, "\n");
+            write_code(node->childrens[i], file);
+            if (node->childrens[i]->type == AST_DECLARATION)
+            {
+                fprintf(file, ";\n\n");
+            }
+            else
+            {
+                fprintf(file, "\n");
+            }
         }
         break;
-
-//////////////////////////////////////////////////////
-
-    case AST_PROGRAM_EXT:
+    case AST_EXT_DECLARATION:
+        fprintf(file, "extern ");
         write_code(node->childrens[0], file);
-        fprintf(file, "\n\n");
         break;
-
-//////////////////////////////////////////////////////
 
     case AST_FUNCTION_DEFINITION:
         for (int i = 0; i < node->childrens_count; i++)
         {
             write_code(node->childrens[i], file);
+            if (node->childrens[i]->type == AST_TYPE_SPECIFIER)
+            {
+                fprintf(file, " ");
+            }
         }
+        fprintf(file, "\n");
         break;
     case AST_RETURN:
         if (node->childrens_count > 0)
@@ -68,9 +71,12 @@ void write_code(ast_node *node, FILE *file)
         fprintf(file, "; ");
         write_code(node->childrens[2], file);
         fprintf(file, ")\n");
-        depth++;
-        tab_depth(file);
-        depth--;
+        if (node->childrens[3]->type != AST_COMPOUND_STATEMENT)
+        {
+            depth++;
+            tab_depth(file);
+            depth--;
+        }
         write_code(node->childrens[3], file);
         break;
     case AST_WHILE:
@@ -143,6 +149,7 @@ void write_code(ast_node *node, FILE *file)
         for (int i = 0; i < node->childrens_count; i++)
         {
             tab_depth(file);
+            
             write_code(node->childrens[i], file);
             fprintf(file, ";\n");
         }
@@ -152,11 +159,10 @@ void write_code(ast_node *node, FILE *file)
         tab_depth(file);
         depth++;
         fprintf(file, "{\n");
-        
-            for (int i = 0; i < node->childrens_count; i++)
-            {
-                write_code(node->childrens[i], file);
-            }
+        for (int i = 0; i < node->childrens_count; i++)
+        {
+            write_code(node->childrens[i], file);
+        }
         depth--;
         tab_depth(file);
         fprintf(file, "}");
@@ -164,6 +170,7 @@ void write_code(ast_node *node, FILE *file)
         break;
     case AST_PARAMETER_DECLARATION:
         write_code(node->childrens[0], file);
+        fprintf(file, " ");
         write_code(node->childrens[1], file);
         break;
     case AST_PARAMETER_LIST:
@@ -196,32 +203,48 @@ void write_code(ast_node *node, FILE *file)
         fprintf(file, ")");
         break;
     case AST_STAR_DECLARATOR:
-        fprintf(file, " *");
+        fprintf(file, "*");
         write_code(node->childrens[0], file);
         break;
     case AST_STRUCT_DECLARATION:
         write_code(node->childrens[0], file);
+        if (node->childrens[1]->type == AST_STAR_DECLARATOR)
+        {
+            fprintf(file, " ");
+        }
         write_code(node->childrens[1], file);
         break;
     case AST_STRUCT_DECLARATION_LIST:
         for (int i = 0; i < node->childrens_count; i++)
-        {
+        {   
+            depth++;
+            tab_depth(file);
             write_code(node->childrens[i], file);
             fprintf(file, ";\n");
+            depth--;
         }
         break;
     case AST_STRUCT_SPECIFIER:
         if (node->childrens_count == 1)
         {
             fprintf(file, "{\n");
+            depth++;
+            tab_depth(file);
             write_code(node->childrens[0], file);
+            depth--;
+            tab_depth(file);
             fprintf(file, "}");
         }
         else if (node->childrens_count == 2)
         {
             write_code(node->childrens[0], file);
+            tab_depth(file);
             fprintf(file, "{\n");
+            depth++;
+            tab_depth(file);
             write_code(node->childrens[1], file);
+            depth--;
+            tab_depth(file);
             fprintf(file, "}");
         }
         break;
@@ -229,16 +252,17 @@ void write_code(ast_node *node, FILE *file)
         fprintf(file, node->id);
         if (node->childrens_count > 0)
         {
+            fprintf(file, " ");
             write_code(node->childrens[0], file);
         }
         break;
-    case AST_DECLARATION_SPECIFIERS:
-        fprintf(file, "extern ");
-        write_code(node->childrens[0], file);
-        break;
     case AST_DECLARATION:
         write_code(node->childrens[0], file);
-        write_code(node->childrens[1], file);
+        if (node->childrens_count > 1)
+        {
+            fprintf(file, " ");
+            write_code(node->childrens[1], file);
+        }
         break;
     case AST_ASSIGNMENT:
         write_code(node->childrens[0], file);
@@ -321,7 +345,7 @@ void write_code(ast_node *node, FILE *file)
         fprintf(file, "-");
         break;
     case AST_UNARY_SIZEOF:
-        fprintf(file, "sizeof ");
+        fprintf(file, "sizeof");
         write_code(node->childrens[0], file);
         break;
     case AST_UNARY:
