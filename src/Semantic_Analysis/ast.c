@@ -5,16 +5,23 @@ ast_node *ast_create_node(ast_type type)
 {
     ast_node *node = (ast_node *)malloc(sizeof(ast_node));
     node->type = type;
+    node->parent = NULL;
     node->childrens = NULL;
     node->childrens_count = 0;
     node->value = -1;
     node->id = NULL;
+    node->false_label = -1;
+    node->true_label = -1;
     
     return node;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+
 void ast_add_child(ast_node *parent, ast_node *child)
 {
+    child->parent = parent;
+
     if (parent->childrens == NULL)
     {
         parent->childrens = (ast_node **)malloc(sizeof(ast_node *));
@@ -27,6 +34,8 @@ void ast_add_child(ast_node *parent, ast_node *child)
     parent->childrens[parent->childrens_count] = child;
     parent->childrens_count++;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////
 
 ast_node *create_int_leaf(int value)
 {
@@ -41,6 +50,8 @@ ast_node *create_id_leaf(char *name)
     node->id = name;
     return node;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////
 
 void print_complete_ast_helper(ast_node *node, int indent)
 {
@@ -62,9 +73,6 @@ void print_complete_ast_helper(ast_node *node, int indent)
     {
     case AST_PROGRAM:
         printf("Program\n");
-        break;
-    case AST_PROGRAM_EXT:
-        printf("Program Ext\n");
         break;
     case AST_FUNCTION_DEFINITION:
         printf("Function Definition\n");
@@ -117,62 +125,26 @@ void print_complete_ast_helper(ast_node *node, int indent)
     case AST_TYPE_SPECIFIER:
         printf("Type Specifier : %s\n", node->id);
         break;
-    case AST_DECLARATION_SPECIFIERS:
-        printf("Declaration Specifiers\n");
-        break;
     case AST_DECLARATION:
         printf("Declaration\n");
         break;
     case AST_ASSIGNMENT:
         printf("Assignment\n");
         break;
-    case AST_LOGICAL_OR:
-        printf("Logical Or\n");
+    case AST_BOOL_LOGIC:
+        printf("Boolean Logic : %s\n", node->id);
         break;
-    case AST_LOGICAL_AND:
-        printf("Logical And\n");
+    case AST_BOOL_OP:
+        printf("Boolean Operator : %s\n", node->id);
         break;
-    case AST_EQUALITY:
-        printf("Equality\n");
-        break;
-    case AST_NEQUALITY:
-        printf("Not Equality\n");
-        break;
-    case AST_LE_RELATIONAL:
-        printf("Less or Equal Relational\n");
-        break;
-    case AST_GE_RELATIONAL:
-        printf("Greater or Equal Relational\n");
-        break;
-    case AST_L_RELATIONAL:
-        printf("Less Relational\n");
-        break;
-    case AST_G_RELATIONAL:
-        printf("Greater Relational\n");
-        break;
-    case AST_ADDITIVE:
-        printf("Additive\n");
-        break;
-    case AST_SUBSTRACTIVE:
-        printf("Subtractive\n");
-        break;
-    case AST_MULTIPLICATIVE:
-        printf("Multiplicative\n");
-        break;
-    case AST_DIVISION:
-        printf("Division\n");
+    case AST_OP:
+        printf("Operator : %s\n", node->id);
         break;
     case AST_UNARY_OPERATOR:
-        printf("Unary Operator\n");
+        printf("Unary Operator : %s\n", node->id);
         break;
-    case AST_UNARY_AND_OPERATOR:
-        printf("Unary And Operator\n");
-        break;
-    case AST_UNARY_STAR_OPERATOR:
-        printf("Unary Star Operator\n");
-        break;
-    case AST_UNARY_MINUS_OPERATOR:
-        printf("Unary Minus Operator\n");
+    case AST_UNARY_OP:
+        printf("Unary Operator : %s\n", node->id);
         break;
     case AST_UNARY_SIZEOF:
         printf("Unary Sizeof\n");
@@ -213,6 +185,9 @@ void print_complete_ast_helper(ast_node *node, int indent)
     case AST_STRUCT_VARIABLE_SPECIFIER:
         printf("Struct Variable Specifier\n");
         break;
+    case AST_EXT_DECLARATION:
+        printf("External Declaration\n");
+        break;
     default:
         printf("Unknown\n");
         break;
@@ -228,6 +203,8 @@ void print_complete_ast(ast_node *root)
 {
     print_complete_ast_helper(root, 0);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////
 
 void free_ast(ast_node *root)
 {

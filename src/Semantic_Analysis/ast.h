@@ -8,7 +8,6 @@
 typedef enum _ast_type
 {
     AST_PROGRAM,
-    AST_PROGRAM_EXT,
     AST_FUNCTION_DEFINITION,
     AST_RETURN,
     AST_FOR,
@@ -26,25 +25,13 @@ typedef enum _ast_type
     AST_STRUCT_DECLARATION_LIST,
     AST_STRUCT_SPECIFIER,
     AST_TYPE_SPECIFIER,
-    AST_DECLARATION_SPECIFIERS,
     AST_DECLARATION,
     AST_ASSIGNMENT,
-    AST_LOGICAL_OR,
-    AST_LOGICAL_AND,
-    AST_EQUALITY,
-    AST_NEQUALITY,
-    AST_L_RELATIONAL,
-    AST_G_RELATIONAL,
-    AST_LE_RELATIONAL,
-    AST_GE_RELATIONAL,
-    AST_ADDITIVE,
-    AST_SUBSTRACTIVE,
-    AST_MULTIPLICATIVE,
-    AST_DIVISION,
+    AST_BOOL_LOGIC,
+    AST_BOOL_OP,
+    AST_OP,
     AST_UNARY_OPERATOR,
-    AST_UNARY_AND_OPERATOR,
-    AST_UNARY_STAR_OPERATOR,
-    AST_UNARY_MINUS_OPERATOR,
+    AST_UNARY_OP,
     AST_UNARY_SIZEOF,
     AST_UNARY,
     AST_ARGUMENT_EXPRESSION_LIST,
@@ -57,16 +44,22 @@ typedef enum _ast_type
     AST_PRIMARY_EXPRESSION,
     AST_DECLARATOR,
     AST_STAR_DECLARATOR,
-    AST_STRUCT_VARIABLE_SPECIFIER
+    AST_STRUCT_VARIABLE_SPECIFIER,
+    AST_EXT_DECLARATION,
 } ast_type;
 
 typedef struct _ast_node
 {
     ast_type type;
+    struct _ast_node *parent;
     struct _ast_node **childrens;
     int childrens_count;
     int value;
     char *id;
+
+    // For boolean expressions
+    int true_label;
+    int false_label;
 } ast_node;
 
 ast_node *ast_create_node(ast_type type);

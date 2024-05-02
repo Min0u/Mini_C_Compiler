@@ -67,9 +67,9 @@ test:
 	@for file in $(TEST_FILES); do \
 		./$(OUTPUT_DIR_FE)/strucit_frontend $$file $(TEST_OUTPUT_DIR)/$$(basename $$file .c)_backend.c; \
 		if [ $$? -eq 0 ]; then \
-			echo "\033[0;32msuccess\033[0m"; \
+			echo "\033[0;32m$$file success\033[0m"; \
 		else \
-			echo "\033[0;31merror\033[0m"; \
+			echo "\033[0;31m$$file error\033[0m"; \
 		fi; \
 		echo ""; \
 	done
@@ -82,21 +82,21 @@ test_file:
 	./$(OUTPUT_DIR_FE)/strucit_frontend $$file $$output
 
 	@if [ $$? -eq 0 ]; then \
-		echo "\033[0;32msuccess\033[0m"; \
+		echo "\033[0;32m$$file success\033[0m"; \
 	else \
-		echo "\033[0;31merror\033[0m"; \
+		echo "\033[0;31me$$file rror\033[0m"; \
 	fi
 
 	@echo "\033[0;32mTest done\033[0m"
 
-// Test all outputs
+# Test all outputs
 test_outputs:
 	@for file in $(TEST_FILES); do \
-		./$(OUTPUT_DIR_FE)/strucit_frontend $$file $(TEST_OUTPUT_DIR)/$$(basename $$file .c)_backend.c; \
+		./$(OUTPUT_DIR_BE)/strucit_backend < $$file; \
 		if [ $$? -eq 0 ]; then \
-			echo "\033[0;32msuccess\033[0m"; \
+			echo "\033[0;32m$$file success\033[0m"; \
 		else \
-			echo "\033[0;31merror\033[0m"; \
+			echo "\033[0;31m$$file error\033[0m"; \
 		fi; \
 		echo ""; \
 	done
@@ -108,9 +108,9 @@ valgrind_test:
 	@for file in $(TEST_FILES); do \
 		$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend $$file $(TEST_OUTPUT_DIR)/$$(basename $$file .c)_backend.c $(HEAD); \
 		if [ $$? -eq 0 ]; then \
-			echo "\033[0;32msuccess\033[0m"; \
+			echo "\033[0;32m$$file success\033[0m"; \
 		else \
-			echo "\033[0;31merror\033[0m"; \
+			echo "\033[0;31m$$file error\033[0m"; \
 		fi; \
 		echo ""; \
 	done
@@ -122,9 +122,9 @@ valgrind_test_file:
 	@read -p "Enter the file name (ex: ./Tests/test.c) and the output file name (ex: ./Tests/Output/test.c) : " file output; \
 	$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend $$file $$output $(HEAD); \
 	if [ $$? -eq 0 ]; then \
-		echo "\033[0;32msuccess\033[0m"; \
+		echo "\033[0;32m$$file success\033[0m"; \
 	else \
-		echo "\033[0;31merror\033[0m"; \
+		echo "\033[0;31m$$file error\033[0m"; \
 	fi
 
 	@echo "\033[0;32mValgrind test done\033[0m"

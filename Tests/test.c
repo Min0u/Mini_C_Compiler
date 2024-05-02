@@ -1,9 +1,9 @@
 void main() {
     int a;
+    a = 0;
 
-    if (a != 0) {
-    a = 2;
-    } else {
-    a = 3;
+    while (a != 2)
+    {
+        a = a + 1;
     }
 }

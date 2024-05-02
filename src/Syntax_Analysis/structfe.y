@@ -140,16 +140,21 @@ unary_expression
 unary_operator
         : '&'
         {
-                $$ = ast_create_node(AST_UNARY_AND_OPERATOR);
+                $$ = ast_create_node(AST_UNARY_OP);
+
+                $$->id = "&";
         }
         | '*'
         {
-                $$ = ast_create_node(AST_UNARY_STAR_OPERATOR);
+                $$ = ast_create_node(AST_UNARY_OP);
+
+                $$->id = "*";
         }
         | '-'
         {
-                $$ = ast_create_node(AST_UNARY_MINUS_OPERATOR);
+                $$ = ast_create_node(AST_UNARY_OP);
 
+                $$->id = "-";
         }
         ;
 
@@ -160,15 +165,19 @@ multiplicative_expression
         }
         | multiplicative_expression '*' unary_expression
         {
-                $$ = ast_create_node(AST_MULTIPLICATIVE);
+                $$ = ast_create_node(AST_OP);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                $$->id = "*";
         }
         | multiplicative_expression '/' unary_expression
         {
-                $$ = ast_create_node(AST_DIVISION);
+                $$ = ast_create_node(AST_OP);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                $$->id = "/";
         }
         ;
 
@@ -179,15 +188,19 @@ additive_expression
         }
         | additive_expression '+' multiplicative_expression
         {
-                $$ = ast_create_node(AST_ADDITIVE);
+                $$ = ast_create_node(AST_OP);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                $$->id = "+";
         }
         | additive_expression '-' multiplicative_expression
         {
-                $$ = ast_create_node(AST_SUBSTRACTIVE);
+                $$ = ast_create_node(AST_OP);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                $$->id = "-";
         }
         ;
 
@@ -198,28 +211,36 @@ relational_expression
         }
         | relational_expression '<' additive_expression
         {
-                $$ = ast_create_node(AST_L_RELATIONAL);
+                $$ = ast_create_node(AST_BOOL_OP);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                $$->id = "<";
 
         }
         | relational_expression '>' additive_expression
         {
-                $$ = ast_create_node(AST_G_RELATIONAL);
+                $$ = ast_create_node(AST_BOOL_OP);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                $$->id = ">";
         }
         | relational_expression LE_OP additive_expression
         {
-                $$ = ast_create_node(AST_LE_RELATIONAL);
+                $$ = ast_create_node(AST_BOOL_OP);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                $$->id = "<=";
         }
         | relational_expression GE_OP additive_expression
         {
-                $$ = ast_create_node(AST_GE_RELATIONAL);
+                $$ = ast_create_node(AST_BOOL_OP);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                $$->id = ">=";
         }
         ;
 
@@ -230,15 +251,19 @@ equality_expression
         }
         | equality_expression EQ_OP relational_expression
         {
-                $$ = ast_create_node(AST_EQUALITY);
+                $$ = ast_create_node(AST_BOOL_OP);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                $$->id = "==";
         }
         | equality_expression NE_OP relational_expression
         {
-                $$ = ast_create_node(AST_NEQUALITY);
+                $$ = ast_create_node(AST_BOOL_OP);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                $$->id = "!=";
         }
         ;
 
@@ -249,9 +274,11 @@ logical_and_expression
         }
         | logical_and_expression AND_OP equality_expression
         {
-                $$ = ast_create_node(AST_LOGICAL_AND);
+                $$ = ast_create_node(AST_BOOL_LOGIC);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                $$->id = "&&";
         }
         ;
 
@@ -262,9 +289,11 @@ logical_or_expression
         }
         | logical_or_expression OR_OP logical_and_expression
         {
-                $$ = ast_create_node(AST_LOGICAL_OR);
+                $$ = ast_create_node(AST_BOOL_LOGIC);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                $$->id = "||";
         }
         ;
 
@@ -558,6 +587,7 @@ jump_statement
 main_program
         : program
         {
+                print_complete_ast($1);
                 write_code($1, yyout);
                 free_ast($1);
         }
