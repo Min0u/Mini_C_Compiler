@@ -6,8 +6,11 @@
 #include <string.h>
 #include "ast.h"
 
-void write_code(ast_node *node, FILE *file);
-
 void tab_depth(FILE *file);
+
+// Inveter operations
+char *inv_op(char *op);
+
+void write_code(ast_node *node, FILE *file);
 
 #endif

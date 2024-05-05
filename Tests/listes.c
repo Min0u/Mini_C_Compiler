@@ -48,7 +48,7 @@ struct liste *parcours(struct liste *l, struct liste *(*f)(struct liste *p)) {
 /* Alloue une liste chainee puis la desalloue */
 int main() {
   struct liste *tete;
-   struct liste *t;
+  struct liste *t;
   t=tete=parcours(0,&allouer);
   parcours(t,&affiche);
   parcours(tete,&desallouer);

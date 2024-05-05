@@ -42,8 +42,19 @@ char *inv_op(char *op)
     {
         return "==";
     }
+    else if (strcmp(op, "||") == 0)
+    {
+        return "&&";
+    }
+    else if (strcmp(op, "&&") == 0)
+    {
+        return "||";
+    }
+    
     return NULL;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////
 
 void write_code(ast_node *node, FILE *file)
 {
@@ -110,10 +121,6 @@ void write_code(ast_node *node, FILE *file)
             tab_depth(file);
             depth--;
         }
-        else
-        {
-            tab_depth(file);
-        }
         write_code(node->childrens[3], file);
         if (node->childrens[3]->type != AST_COMPOUND_STATEMENT)
         {
@@ -145,7 +152,6 @@ void write_code(ast_node *node, FILE *file)
         fprintf(file, "test_%d:\n", node->childrens[0]->true_label);
         tab_depth(file);
         write_code(node->childrens[0], file);
-        tab_depth(file);
         write_code(node->childrens[1], file);
         fprintf(file, ";\n");
         tab_depth(file);
@@ -164,9 +170,12 @@ void write_code(ast_node *node, FILE *file)
         node->childrens[0]->false_label = bool_counter;
         bool_counter++;
         write_code(node->childrens[0], file);
-        depth++;
-        tab_depth(file);
-        depth--;
+        if (node->childrens[1]->type != AST_COMPOUND_STATEMENT)
+        {
+            depth++;
+            tab_depth(file);
+            depth--;
+        }
         write_code(node->childrens[1], file);
         if (node->childrens[1]->type != AST_COMPOUND_STATEMENT)
         {
@@ -186,7 +195,6 @@ void write_code(ast_node *node, FILE *file)
         node->childrens[0]->false_label = bool_counter;
         bool_counter++;
         write_code(node->childrens[0], file);
-        fprintf(file, ";");
         if (node->childrens[1]->type != AST_COMPOUND_STATEMENT)
         {
             depth++;
@@ -258,9 +266,12 @@ void write_code(ast_node *node, FILE *file)
         }
         break;
     case AST_COMPOUND_STATEMENT:
-
         tab_depth(file);
         depth++;
+        if (node->parent->type == AST_FUNCTION_DEFINITION)
+        {
+            fprintf(file, "\n");
+        }
         fprintf(file, "{\n");
         for (int i = 0; i < node->childrens_count; i++)
         {
@@ -349,7 +360,7 @@ void write_code(ast_node *node, FILE *file)
         }
         break;
     case AST_TYPE_SPECIFIER:
-        fprintf(file, node->id);
+        fprintf(file, "%s", node->id);
         if (node->childrens_count > 0)
         {
             fprintf(file, " ");
@@ -370,9 +381,31 @@ void write_code(ast_node *node, FILE *file)
         write_code(node->childrens[1], file);
         break;
     case AST_BOOL_LOGIC:
-        write_code(node->childrens[0], file);
-        fprintf(file, " %s ", node->id);
-        write_code(node->childrens[1], file);
+        if (node->id[0] == '&')
+        {
+            node->childrens[0]->false_label = node->false_label;
+            node->childrens[1]->false_label = node->false_label;
+            write_code(node->childrens[0], file);
+            tab_depth(file);
+            write_code(node->childrens[1], file);
+        }
+        else
+        {
+            node->childrens[0]->false_label = bool_counter;
+            bool_counter++;
+            node->childrens[0]->true_label = node->true_label;
+
+            node->childrens[1]->false_label = node->false_label;
+            node->childrens[1]->true_label = node->true_label;
+
+            write_code(node->childrens[0], file);
+            tab_depth(file);
+            fprintf(file, "goto true_%d;\n", node->childrens[0]->true_label);
+            fprintf(file, "false_%d:\n", node->childrens[0]->false_label);
+            tab_depth(file);
+            write_code(node->childrens[1], file);
+            fprintf(file, "true_%d:\n", node->childrens[0]->true_label);
+        }
         break;
     case AST_BOOL_OP:
         fprintf(file, "if (");
@@ -398,7 +431,16 @@ void write_code(ast_node *node, FILE *file)
         break;
     case AST_UNARY_SIZEOF:
         fprintf(file, "sizeof");
-        write_code(node->childrens[0], file);
+        if (node->childrens[0]->type == AST_TYPE_SPECIFIER)
+        {
+            fprintf(file, "(");
+            write_code(node->childrens[0], file);
+            fprintf(file, ")");
+        }
+        else
+        {
+            write_code(node->childrens[0], file);
+        }
         break;
     case AST_UNARY:
         for (int i = 0; i < node->childrens_count; i++)

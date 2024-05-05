@@ -10,8 +10,8 @@
         #include <stdlib.h>
         #include "y.tab.h"
 
-        #define SEMANTIC_ERROR 1
-        #define SYNTAX_ERROR 2
+        #define SEMANTIC_ERROR 2
+        #define SYNTAX_ERROR 3
 }
 
 %{
@@ -134,6 +134,11 @@ unary_expression
         {
                 $$ = ast_create_node(AST_UNARY_SIZEOF);
                 ast_add_child($$, $2);
+        }
+        | SIZEOF '(' type_specifier ')'
+        {
+                $$ = ast_create_node(AST_UNARY_SIZEOF);
+                ast_add_child($$, $3);
         }
         ;
 
@@ -587,6 +592,7 @@ jump_statement
 main_program
         : program
         {
+                tac_transformation($1);
                 print_complete_ast($1);
                 write_code($1, yyout);
                 free_ast($1);
@@ -651,7 +657,7 @@ int main(int argc, char **argv)
                 return 1;
         }
 
-        printf("Parsing started :|\n");
+        printf("Parsing started...\n");
 
         yyparse();
 

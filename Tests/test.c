@@ -1,9 +1,40 @@
-void main() {
-    int a;
-    a = 0;
+extern void printd(int i);
 
-    while (a != 2)
-    {
-        a = a + 1;
-    }
+int calc(int a, int b, int c, int d, int e, int f, int g)
+{
+    int result;
+    int result2;
+
+    result = ((a + b) * (c + d) / (a - c)) * ((b + d) * e - (c / a)) + (d - e) * (f + g) / (b + e);
+    result2 = ((a + b) * (c + d) / (a - c)) * ((b + d) * e - (c / a)) + (d - e) * (f + g) / (b + e);
+
+    return result + result2;
+}
+
+int main()
+{
+    int a;
+    int b;
+    int c;
+    int d;
+    int e;
+    int f;
+    int g;
+    int result;
+
+    a = 2 + (1 + 2 + 3);
+
+    a = 1;
+    b = 2;
+    c = 3;
+    d = 4;
+    e = 5;
+    f = 6;
+    g = 7;
+
+    result = calc(a, b, c, d, e, f, g);
+
+    printd(result + a + b);
+
+    return 0;
 }
