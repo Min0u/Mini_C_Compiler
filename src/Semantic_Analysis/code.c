@@ -1,7 +1,4 @@
 #include "code.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 int depth = 0;
 int bool_counter = 0;
@@ -56,7 +53,7 @@ char *inv_op(char *op)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-void write_code(ast_node *node, FILE *file)
+void write_code(Ast_node *node, FILE *file)
 {
     if (node == NULL)
     {
@@ -137,9 +134,9 @@ void write_code(ast_node *node, FILE *file)
         tab_depth(file);
         fprintf(file, "goto test_%d;", node->childrens[1]->true_label);
         fprintf(file, "\nfalse_%d:", node->childrens[1]->true_label);
-        ast_node *parent_f = node->parent;
-        ast_node **childrens_f = parent_f->childrens;
-        ast_node *last_f = childrens_f[parent_f->childrens_count - 1];
+        Ast_node *parent_f = node->parent;
+        Ast_node **childrens_f = parent_f->childrens;
+        Ast_node *last_f = childrens_f[parent_f->childrens_count - 1];
         if (last_f == node)
         {
             fprintf(file, ";");
@@ -157,9 +154,9 @@ void write_code(ast_node *node, FILE *file)
         tab_depth(file);
         fprintf(file, "goto test_%d;\n", node->childrens[0]->false_label);
         fprintf(file, "\nfalse_%d:", node->childrens[0]->false_label);
-        ast_node *parent_w = node->parent;
-        ast_node **childrens_w = parent_w->childrens;
-        ast_node *last_w = childrens_w[parent_w->childrens_count - 1];
+        Ast_node *parent_w = node->parent;
+        Ast_node **childrens_w = parent_w->childrens;
+        Ast_node *last_w = childrens_w[parent_w->childrens_count - 1];
         if (last_w == node)
         {
             fprintf(file, ";");
@@ -182,9 +179,9 @@ void write_code(ast_node *node, FILE *file)
             fprintf(file, ";");
         }
         fprintf(file, "\nfalse_%d:", node->childrens[0]->true_label);
-        ast_node *parent_i = node->parent;
-        ast_node **childrens_i = parent_i->childrens;
-        ast_node *last_i = childrens_i[parent_i->childrens_count - 1];
+        Ast_node *parent_i = node->parent;
+        Ast_node **childrens_i = parent_i->childrens;
+        Ast_node *last_i = childrens_i[parent_i->childrens_count - 1];
         if (last_i == node)
         {
             fprintf(file, ";");
@@ -222,9 +219,9 @@ void write_code(ast_node *node, FILE *file)
             fprintf(file, ";");
         }
         fprintf(file, "\nend_%d:", node->childrens[0]->false_label);
-        ast_node *parent = node->parent;
-        ast_node **childrens = parent->childrens;
-        ast_node *last = childrens[parent->childrens_count - 1];
+        Ast_node *parent = node->parent;
+        Ast_node **childrens = parent->childrens;
+        Ast_node *last = childrens[parent->childrens_count - 1];
         if (last == node)
         {
             fprintf(file, ";");

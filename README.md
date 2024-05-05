@@ -21,42 +21,43 @@ The compiler generates three-address code from the source code written in STRUCI
 ## How to Run ##
 
 Make sure you have `flex`, `bison`, and `gcc` installed on your system.
-If not, you can install them using the following commands 
+If not, you can install them using the following commands        
 ```
-sudo apt-get install flex
+sudo apt-get install flex                       
 sudo apt-get install bison
 sudo apt-get install gcc
 ```
 
 1. Clone the repository.
 2. Navigate to the `Mini_C_Compiler` directory.
-3. Run the following command to get all available commands: ```make help```
+3. Run the following command to get all available commands: `make help`
 
 ## If makefile is not working ##
-Try the following command for generating the executables
+Use the following command to generate the executables :
 
-Create the following directories
+Create the following directories :        
 ```
 mkdir -p src/build/BE
 mkdir -p src/build/FE
 mkdir -p Tests/Output
 ```
-STRUCIT-backend
+
+STRUCIT-backend :             
 ```
 bison -Wcounterexamples -o src/build/BE/y.tab.c -d src/Syntax_Analysis/structbe.y
 flex -o src/build/BE/lex.yy.c src/Lexical_Analysis/ANSI-BE.l
 gcc -o src/build/BE/strucit_backend src/build/BE/y.tab.c src/build/BE/lex.yy.c -g -lfl -W -Wall -Wextra -Wpedantic
 ```
 
-STRUCIT-frontend
+STRUCIT-frontend :    
 ```
 bison -Wcounterexamples -o src/build/FE/y.tab.c -d src/Syntax_Analysis/structfe.y
 flex -o src/build/FE/lex.yy.c src/Lexical_Analysis/ANSI-C.l
 gcc -o src/build/FE/strucit_frontend src/Semantic_Analysis/ast.c src/Semantic_Analysis/code.c src/Semantic_Analysis/symbol_table.c src/Semantic_Analysis/error.c src/Semantic_Analysis/stack.c src/Semantic_Analysis/utils.c src/build/FE/y.tab.c src/build/FE/lex.yy.c -g -lfl -W -Wall -Wextra -Wpedantic
 ```
 
-Use the following command to generate the STRUCIT-backend code from the STRUCIT-frontend code.
-```
-./src/build/FE/strucit_frontend< path_to_input_file > path_to_output_file
-```
+To compile the STRUCIT-frontend file, use the following command : 
+`
+./src/build/FE/strucit_frontend <path_to_input_file> <path_to_output_file>
+`
 

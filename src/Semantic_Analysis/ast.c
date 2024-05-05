@@ -1,11 +1,10 @@
-#include <stdio.h>
 #include "ast.h"
 
 int var_count = 0;
 
-ast_node *ast_create_node(ast_type type)
+Ast_node *ast_create_node(Ast_type type)
 {
-    ast_node *node = (ast_node *)malloc(sizeof(ast_node));
+    Ast_node *node = (Ast_node *)malloc(sizeof(Ast_node));
     node->type = type;
     node->parent = NULL;
     node->childrens = NULL;
@@ -20,50 +19,50 @@ ast_node *ast_create_node(ast_type type)
     return node;
 }
 
-ast_node *create_int_leaf(int value)
+Ast_node *create_int_leaf(int value)
 {
-    ast_node *node = ast_create_node(AST_CONSTANT);
+    Ast_node *node = ast_create_node(AST_CONSTANT);
     node->value = value;
     return node;
 }
 
-ast_node *create_id_leaf(char *name)
+Ast_node *create_id_leaf(char *name)
 {
-    ast_node *node = ast_create_node(AST_IDENTIFIER);
+    Ast_node *node = ast_create_node(AST_IDENTIFIER);
     node->id = name;
     return node;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-void ast_add_child(ast_node *parent, ast_node *child)
+void ast_add_child(Ast_node *parent, Ast_node *child)
 {
     child->parent = parent;
 
     if (parent->childrens == NULL)
     {
-        parent->childrens = (ast_node **)malloc(sizeof(ast_node *));
+        parent->childrens = (Ast_node **)malloc(sizeof(Ast_node *));
     }
     else
     {
-        parent->childrens = (ast_node **)realloc(parent->childrens, sizeof(ast_node *) * (parent->childrens_count + 1));
+        parent->childrens = (Ast_node **)realloc(parent->childrens, sizeof(Ast_node *) * (parent->childrens_count + 1));
     }
 
     parent->childrens[parent->childrens_count] = child;
     parent->childrens_count++;
 }
 
-void ast_add_child_front(ast_node *parent, ast_node *child)
+void ast_add_child_front(Ast_node *parent, Ast_node *child)
 {
     child->parent = parent;
 
     if (parent->childrens == NULL)
     {
-        parent->childrens = (ast_node **)malloc(sizeof(ast_node *));
+        parent->childrens = (Ast_node **)malloc(sizeof(Ast_node *));
     }
     else
     {
-        parent->childrens = (ast_node **)realloc(parent->childrens, sizeof(ast_node *) * (parent->childrens_count + 1));
+        parent->childrens = (Ast_node **)realloc(parent->childrens, sizeof(Ast_node *) * (parent->childrens_count + 1));
     }
 
     // Shift all the elements to the right
@@ -77,17 +76,17 @@ void ast_add_child_front(ast_node *parent, ast_node *child)
 }
 
 // Add a child before a specific child (before is the specific child)
-void ast_add_child_before(ast_node *parent, ast_node *child, ast_node *before)
+void ast_add_child_before(Ast_node *parent, Ast_node *child, Ast_node *before)
 {
     child->parent = parent;
 
     if (parent->childrens == NULL)
     {
-        parent->childrens = (ast_node **)malloc(sizeof(ast_node *));
+        parent->childrens = (Ast_node **)malloc(sizeof(Ast_node *));
     }
     else
     {
-        parent->childrens = (ast_node **)realloc(parent->childrens, sizeof(ast_node *) * (parent->childrens_count + 1));
+        parent->childrens = (Ast_node **)realloc(parent->childrens, sizeof(Ast_node *) * (parent->childrens_count + 1));
     }
 
     // Find the index of before
@@ -110,19 +109,19 @@ void ast_add_child_before(ast_node *parent, ast_node *child, ast_node *before)
     parent->childrens_count++;
 }
 
-ast_node *ast_add_temporary(ast_node *node)
+Ast_node *ast_add_temporary(Ast_node *node)
 {
-    ast_node *list = find_declaration_list(node);
+    Ast_node *list = find_declaration_list(node);
 
-    ast_node *declaration = ast_create_node(AST_DECLARATION);
+    Ast_node *declaration = ast_create_node(AST_DECLARATION);
 
-    ast_node *specifier = ast_create_node(AST_TYPE_SPECIFIER);
+    Ast_node *specifier = ast_create_node(AST_TYPE_SPECIFIER);
     specifier->id = "int";
 
     char *name;
     asprintf(&name, "_temp_%d", var_count++);
     // identifier node for the declaration list
-    ast_node *identifier = create_id_leaf(strdup(name));
+    Ast_node *identifier = create_id_leaf(strdup(name));
     identifier->available = false;
 
     ast_add_child(declaration, specifier);
@@ -135,7 +134,7 @@ ast_node *ast_add_temporary(ast_node *node)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-ast_node *find_declaration_list(ast_node *node)
+Ast_node *find_declaration_list(Ast_node *node)
 {
     if (node == NULL)
     {
@@ -143,7 +142,7 @@ ast_node *find_declaration_list(ast_node *node)
     }
 
     // Find a compound statement node
-    ast_node *parent = find_parent(node, AST_COMPOUND_STATEMENT);
+    Ast_node *parent = find_parent(node, AST_COMPOUND_STATEMENT);
 
     for (int i = 0; i < parent->childrens_count; i++)
     {
@@ -155,12 +154,12 @@ ast_node *find_declaration_list(ast_node *node)
     }
 
     // If there is no declaration list, create a new one
-    ast_node *list = ast_create_node(AST_DECLARATION_LIST);
+    Ast_node *list = ast_create_node(AST_DECLARATION_LIST);
     ast_add_child_front(parent, list);
     return list;
 }
 
-ast_node *find_parent(ast_node *node, ast_type type)
+Ast_node *find_parent(Ast_node *node, Ast_type type)
 {
     if (node == NULL)
     {
@@ -168,7 +167,7 @@ ast_node *find_parent(ast_node *node, ast_type type)
     }
 
     // node parent
-    ast_node *parent = node->parent;
+    Ast_node *parent = node->parent;
 
     while (parent != NULL)
     {
@@ -183,14 +182,14 @@ ast_node *find_parent(ast_node *node, ast_type type)
     return NULL;
 }
 
-ast_node *find_last_parent_before(ast_node *node, ast_type type)
+Ast_node *find_last_parent_before(Ast_node *node, Ast_type type)
 {
     if (node == NULL || node->parent == NULL)
     {
         return NULL;
     }
 
-    ast_node *last_parent = node;
+    Ast_node *last_parent = node;
 
     while (last_parent->parent != NULL)
     {
@@ -205,14 +204,14 @@ ast_node *find_last_parent_before(ast_node *node, ast_type type)
     return NULL;
 }
 
-ast_node *find_available_temporary(ast_node *node)
+Ast_node *find_available_temporary(Ast_node *node)
 {
     if (node == NULL)
     {
         return NULL;
     }
 
-    ast_node *list = find_declaration_list(node);
+    Ast_node *list = find_declaration_list(node);
 
     for (int i = 0; i < list->childrens_count; i++)
     {
@@ -232,9 +231,33 @@ ast_node *find_available_temporary(ast_node *node)
     return NULL;
 }
 
+char *find_first_identifier(Ast_node *node)
+{
+    if (node == NULL)
+    {
+        return NULL;
+    }
+
+    if (node->type == AST_IDENTIFIER)
+    {
+        return node->id;
+    }
+
+    for (int i = 0; i < node->childrens_count; i++)
+    {
+        char *res = find_first_identifier(node->childrens[i]);
+        if (res != NULL)
+        {
+            return res;
+        }
+    }
+
+    return NULL;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 
-ast_node *get_temporary(ast_node *node)
+Ast_node *get_temporary(Ast_node *node)
 {
     if (node == NULL)
     {
@@ -242,7 +265,7 @@ ast_node *get_temporary(ast_node *node)
     }
 
     // Look for an available temporary variable
-    ast_node *res = find_available_temporary(node);
+    Ast_node *res = find_available_temporary(node);
 
     // If there is no available temporary variable, create a new one
     if (res == NULL)
@@ -253,7 +276,7 @@ ast_node *get_temporary(ast_node *node)
     return res;
 }
 
-char **get_all_temporaries(ast_node *node, int *count)
+char **get_all_temporaries(Ast_node *node, int *count)
 {
     if (node == NULL)
     {
@@ -323,14 +346,14 @@ char **get_all_temporaries(ast_node *node, int *count)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-void available_temporary(ast_node *node, char *name)
+void available_temporary(Ast_node *node, char *name)
 {
     if (node == NULL)
     {
         return;
     }
 
-    ast_node *list = find_declaration_list(node);
+    Ast_node *list = find_declaration_list(node);
 
     for (int i = 0; i < list->childrens_count; i++)
     {
@@ -349,7 +372,7 @@ void available_temporary(ast_node *node, char *name)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-ast_node *split_node_into_var(ast_node *node, char *name)
+Ast_node *split_node_into_var(Ast_node *node, char *name)
 {
     if (node == NULL)
     {
@@ -357,15 +380,15 @@ ast_node *split_node_into_var(ast_node *node, char *name)
     }
 
     // Find a parent : statement list node
-    ast_node *parent = find_parent(node, AST_STATEMENT_LIST);
+    Ast_node *parent = find_parent(node, AST_STATEMENT_LIST);
 
     // Find the last parent before the statement list node
-    ast_node *last_parent = find_last_parent_before(node, AST_STATEMENT_LIST);
+    Ast_node *last_parent = find_last_parent_before(node, AST_STATEMENT_LIST);
 
-    ast_node *assignment = ast_create_node(AST_ASSIGNMENT);
+    Ast_node *assignment = ast_create_node(AST_ASSIGNMENT);
 
     // Create a new identifier node for the assignment node
-    ast_node *identifier = create_id_leaf(strdup(name));
+    Ast_node *identifier = create_id_leaf(strdup(name));
 
     ast_add_child(assignment, identifier);
     ast_add_child(assignment, node);
@@ -373,12 +396,12 @@ ast_node *split_node_into_var(ast_node *node, char *name)
     ast_add_child_before(parent, assignment, last_parent);
 
     // (it will be used to replace the node in the parent node)
-    ast_node *res = create_id_leaf(strdup(name));
+    Ast_node *res = create_id_leaf(strdup(name));
 
     return res;
 }
 
-ast_node *split_node_into_temp_var(ast_node *node)
+Ast_node *split_node_into_temp_var(Ast_node *node)
 {
     if (node == NULL)
     {
@@ -386,15 +409,15 @@ ast_node *split_node_into_temp_var(ast_node *node)
     }
 
     // Get a temporary variable
-    ast_node *temp = get_temporary(node);
+    Ast_node *temp = get_temporary(node);
 
     // Split the node into a temporary variable
-    ast_node *res = split_node_into_var(node, temp->id);
+    Ast_node *res = split_node_into_var(node, temp->id);
 
     return res;
 }
 
-int split_op(ast_node *node, char *var[], bool used[], int n)
+int split_op(Ast_node *node, char *var[], bool used[], int n)
 {
     if (node == NULL)
     {
@@ -426,10 +449,10 @@ int split_op(ast_node *node, char *var[], bool used[], int n)
             }
         }
 
-        ast_node *assignment = ast_create_node(AST_ASSIGNMENT);
-        ast_node *identifier = create_id_leaf(strdup(var[temp_index]));
-        ast_node *unary = ast_create_node(AST_UNARY);
-        ast_node *op = ast_create_node(AST_UNARY_OP);
+        Ast_node *assignment = ast_create_node(AST_ASSIGNMENT);
+        Ast_node *identifier = create_id_leaf(strdup(var[temp_index]));
+        Ast_node *unary = ast_create_node(AST_UNARY);
+        Ast_node *op = ast_create_node(AST_UNARY_OP);
 
         op->id = node->childrens[0]->id;
 
@@ -441,15 +464,15 @@ int split_op(ast_node *node, char *var[], bool used[], int n)
         }
         else
         {
-            ast_node *temp = create_id_leaf(strdup(var[split]));
+            Ast_node *temp = create_id_leaf(strdup(var[split]));
             ast_add_child(unary, temp);
         }
 
         ast_add_child(assignment, identifier);
         ast_add_child(assignment, unary);
 
-        ast_node *statement_list = find_parent(node, AST_STATEMENT_LIST);
-        ast_node *before_statement = find_last_parent_before(node, AST_STATEMENT_LIST);
+        Ast_node *statement_list = find_parent(node, AST_STATEMENT_LIST);
+        Ast_node *before_statement = find_last_parent_before(node, AST_STATEMENT_LIST);
 
         ast_add_child_before(statement_list, assignment, before_statement);
 
@@ -483,9 +506,9 @@ int split_op(ast_node *node, char *var[], bool used[], int n)
             }
         }
 
-        ast_node *assignment = ast_create_node(AST_ASSIGNMENT);
-        ast_node *identifier = create_id_leaf(strdup(var[temp_index]));
-        ast_node *op = ast_create_node(AST_OP);
+        Ast_node *assignment = ast_create_node(AST_ASSIGNMENT);
+        Ast_node *identifier = create_id_leaf(strdup(var[temp_index]));
+        Ast_node *op = ast_create_node(AST_OP);
 
         op->id = node->id;
 
@@ -495,7 +518,7 @@ int split_op(ast_node *node, char *var[], bool used[], int n)
         }
         else
         {
-            ast_node *left = create_id_leaf(strdup(var[left_i]));
+            Ast_node *left = create_id_leaf(strdup(var[left_i]));
             ast_add_child(op, left);
         }
 
@@ -505,15 +528,15 @@ int split_op(ast_node *node, char *var[], bool used[], int n)
         }
         else
         {
-            ast_node *right = create_id_leaf(strdup(var[right_i]));
+            Ast_node *right = create_id_leaf(strdup(var[right_i]));
             ast_add_child(op, right);
         }
 
         ast_add_child(assignment, identifier);
         ast_add_child(assignment, op);
 
-        ast_node *statement_list = find_parent(node, AST_STATEMENT_LIST);
-        ast_node *before_statement = find_last_parent_before(node, AST_STATEMENT_LIST);
+        Ast_node *statement_list = find_parent(node, AST_STATEMENT_LIST);
+        Ast_node *before_statement = find_last_parent_before(node, AST_STATEMENT_LIST);
 
         ast_add_child_before(statement_list, assignment, before_statement);
 
@@ -527,7 +550,7 @@ int split_op(ast_node *node, char *var[], bool used[], int n)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-void sethi_ullman(ast_node *node)
+void sethi_ullman(Ast_node *node)
 {
     if (node == NULL)
     {
@@ -539,7 +562,7 @@ void sethi_ullman(ast_node *node)
     case AST_CONSTANT:
     case AST_IDENTIFIER:
     {
-        ast_node *parent = node->parent;
+        Ast_node *parent = node->parent;
         if (parent->childrens[0] == node && parent->childrens[1]->type != AST_PRIMARY_EXPRESSION)
         {
             node->sethi_ullman = 1;
@@ -587,7 +610,7 @@ void sethi_ullman(ast_node *node)
 ////////////////////////////////////////////////////////////////////////////////////////
 
 // Transform the AST into TAC (Three Address Code)
-void *tac_transformation(ast_node *node)
+void *tac_transformation(Ast_node *node)
 {
     switch (node->type)
     {
@@ -630,7 +653,7 @@ void *tac_transformation(ast_node *node)
 
         // Available the temporary variables only if the parent is not a boolean logic node
         // We still need the temporary variables for the boolean logic node
-        ast_node *parent = find_parent(node, AST_BOOL_LOGIC);
+        Ast_node *parent = find_parent(node, AST_BOOL_LOGIC);
         if (parent == NULL)
         {
             if (split_left)
@@ -648,7 +671,7 @@ void *tac_transformation(ast_node *node)
         tac_transformation(node->childrens[0]);
         tac_transformation(node->childrens[1]);
 
-        ast_node *op = find_parent(node, AST_BOOL_OP);
+        Ast_node *op = find_parent(node, AST_BOOL_OP);
 
         // No boolean operator parent -> used the temporary variables
         if (op == NULL)
@@ -682,8 +705,8 @@ void *tac_transformation(ast_node *node)
         break;
     case AST_OP:
     {
-        ast_node *left = node->childrens[0];
-        ast_node *right = node->childrens[1];
+        Ast_node *left = node->childrens[0];
+        Ast_node *right = node->childrens[1];
 
         if (left->type == AST_OP || right->type == AST_OP || left->type == AST_PRIMARY_EXPRESSION || right->type == AST_PRIMARY_EXPRESSION || left->type == AST_UNARY || right->type == AST_UNARY)
         {
@@ -696,7 +719,7 @@ void *tac_transformation(ast_node *node)
 
                 for (int i = 0; i < node->sethi_ullman; i++)
                 {
-                    ast_node *temp = get_temporary(node);
+                    Ast_node *temp = get_temporary(node);
                     var[i] = temp->id;
                     used[i] = false;
                 }
@@ -710,7 +733,7 @@ void *tac_transformation(ast_node *node)
 
                 if (temp_index != -1)
                 {
-                    ast_node *temp = create_id_leaf(strdup(var[temp_index]));
+                    Ast_node *temp = create_id_leaf(strdup(var[temp_index]));
                     temp->parent = node->parent;
                     *node = *temp;
                 }
@@ -729,7 +752,7 @@ void *tac_transformation(ast_node *node)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-void free_ast(ast_node *root)
+void free_ast(Ast_node *root)
 {
     if (root == NULL)
     {
@@ -746,7 +769,7 @@ void free_ast(ast_node *root)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-void print_complete_ast_helper(ast_node *node, int indent)
+void print_complete_ast_helper(Ast_node *node, int indent)
 {
     if (node == NULL)
     {
@@ -892,7 +915,7 @@ void print_complete_ast_helper(ast_node *node, int indent)
     }
 }
 
-void print_complete_ast(ast_node *root)
+void print_complete_ast(Ast_node *root)
 {
     print_complete_ast_helper(root, 0);
 }

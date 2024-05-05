@@ -2,6 +2,9 @@
 {
         #include "../../src/Semantic_Analysis/ast.h"
         #include "../../src/Semantic_Analysis/code.h"
+        #include "../../src/Semantic_Analysis/symbol.h"
+        #include "../../src/Semantic_Analysis/stack.h"
+        #include "../../src/Semantic_Analysis/hashmap.h"
 }
 
 %code top 
@@ -21,6 +24,8 @@ extern FILE *yyin;
 extern FILE *yyout;
 int yylex();
 
+Stack *stack;
+
 int yyerror(const char *s ) 
 {
 fprintf(stderr, "%s at line %d\n", s, yylineno);
@@ -33,7 +38,7 @@ exit(SYNTAX_ERROR);
 
 %union 
 {
-        ast_node *node;
+        Ast_node *node;
 }
 
 %token < node > IDENTIFIER
@@ -46,7 +51,6 @@ exit(SYNTAX_ERROR);
 %token < node > INT VOID
 %token STRUCT
 %token IF ELSE WHILE FOR RETURN
-%token '(' ')' '{' '}' ';' ',' '.' '-' '+' '*' '/' '&' '=' '<' '>'
 
 %type < node > primary_expression postfix_expression argument_expression_list unary_expression unary_operator multiplicative_expression additive_expression relational_expression equality_expression logical_and_expression logical_or_expression expression declaration declaration_specifiers type_specifier struct_specifier struct_declaration_list struct_declaration declarator direct_declarator parameter_list parameter_declaration statement compound_statement  declaration_list statement_list expression_statement selection_statement iteration_statement jump_statement program external_declaration function_definition
 
@@ -321,6 +325,28 @@ declaration
                 $$ = ast_create_node(AST_DECLARATION);
                 ast_add_child($$, $1);
                 ast_add_child($$, $2);
+
+                if ($1->type == AST_TYPE_SPECIFIER && ($2->type == AST_IDENTIFIER || $2->type == AST_STAR_DECLARATOR))
+                {
+                        char *id = find_first_identifier($2);
+
+                        if (id != NULL)
+                        {
+                                if (lookup_stack_top(stack, id))
+                                {
+                                        printf("\033[1;31mError: \033[0mVariable \033[1m\"%s\" \033[0malready declared (line %d)\033[0m\n", id, yylineno);
+                                        YYERROR;
+                                }
+
+                                if (lookup_stack(stack, id))
+                                {
+                                        printf("\033[1;35mWarning: \033[0mOverwriting variable \033[1m\"%s\" \033[0m(line %d)\033[0m\n", id, yylineno);
+                                }
+                                
+                                Symbol *symbol = create_symbol(id, 4, IDENTIFIER_SYMBOL);
+                                push_symbol(stack, id, symbol);
+                        }
+                }
         }
         | struct_specifier ';'
         {
@@ -364,13 +390,13 @@ type_specifier
         ;
 
 struct_specifier
-        : STRUCT IDENTIFIER '{' struct_declaration_list '}'
+        : STRUCT IDENTIFIER open_brace struct_declaration_list close_brace
         {
                 $$ = ast_create_node(AST_STRUCT_VARIABLE_SPECIFIER);
                 ast_add_child($$, $2);
                 ast_add_child($$, $4);
         }
-        | STRUCT '{' struct_declaration_list '}'
+        | STRUCT open_brace struct_declaration_list close_brace
         {
                 $$ = ast_create_node(AST_STRUCT_SPECIFIER);
                 ast_add_child($$, $3);
@@ -483,22 +509,37 @@ statement
         }
         ;
 
+open_brace
+        : '{'
+        {
+                Hash_map *hashmap = create_hash_map();
+                push(stack, hashmap);
+        }
+        ;
+
+close_brace
+        : '}'
+        {
+                pop(stack);
+        }
+        ;
+
 compound_statement
-        : '{' '}'
+        : open_brace close_brace
         {
                 $$ = ast_create_node(AST_COMPOUND_STATEMENT);
         }
-        | '{' statement_list '}'
-        {
-                $$ = ast_create_node(AST_COMPOUND_STATEMENT);
-                ast_add_child($$, $2);
-        }
-        | '{' declaration_list '}'
+        | open_brace statement_list close_brace
         {
                 $$ = ast_create_node(AST_COMPOUND_STATEMENT);
                 ast_add_child($$, $2);
         }
-        | '{' declaration_list statement_list '}'
+        | open_brace declaration_list close_brace
+        {
+                $$ = ast_create_node(AST_COMPOUND_STATEMENT);
+                ast_add_child($$, $2);
+        }
+        | open_brace declaration_list statement_list close_brace
         {
                 $$ = ast_create_node(AST_COMPOUND_STATEMENT);
                 ast_add_child($$, $2);
@@ -593,7 +634,7 @@ main_program
         : program
         {
                 tac_transformation($1);
-                print_complete_ast($1);
+                // print_complete_ast($1);
                 write_code($1, yyout);
                 free_ast($1);
         }
@@ -637,31 +678,37 @@ function_definition
 
 int main(int argc, char **argv)
 {
+        stack = create_stack();
+        Hash_map *hashmap = create_hash_map();
+
+        push(stack, hashmap);
+
         if (argc < 2)
         {
-                fprintf(stderr, "Usage: %s <filename> <outputfile>\n", argv[0]);
+                fprintf(stderr, "\033[1;36mUsage: \033[0;36m%s <input_file> <output_file>\033[0m\n", argv[0]);
                 return 1;
         }
 
         yyin = fopen(argv[1], "r");
         if (yyin == NULL)
         {
-                fprintf(stderr, "Cannot open file %s\n", argv[1]);
+                fprintf(stderr, "\033[0;31mCannot open file %s\n\033[0m", argv[1]);
                 return 1;
         }
 
         yyout = fopen(argv[2], "w");
         if (yyout == NULL)
         {
-                fprintf(stderr, "Cannot open file %s\n", argv[2]);
+                fprintf(stderr, "\033[0;31mCannot open file %s\n\033[0m", argv[2]);
                 return 1;
         }
 
-        printf("Parsing started...\n");
+        printf("\033[0;34mParsing started...\033[0m\n");
 
         yyparse();
 
-        printf("Parsing done :)\n");
+
+        printf("\033[0;34mParsing done :)\033[0m\n");
 
         fclose(yyin);
         fclose(yyout);

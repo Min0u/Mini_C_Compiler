@@ -24,6 +24,13 @@ int main()
     int i;
     int result;
 
+    for (i = 0; i < 10; i = i + 1)
+    {
+        int a;
+        int a;
+        printd(i);
+    }
+
     a = 2 + (1 + 2 + 3);
 
     a = 1;
@@ -44,13 +51,6 @@ int main()
     {
         printd(i);
     }
-
-    while (-3 >= -20)
-    {
-        printd(-3);
-        -3 = -3 - 1;
-    }
-    
 
     return 0;
 }

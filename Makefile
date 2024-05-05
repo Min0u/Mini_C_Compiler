@@ -80,7 +80,7 @@ test:
 
 # Test a specific file
 test_file:
-	@read -p "Enter the file name (ex: ./Tests/test.c) and the output file name (ex: ./Tests/Output/test.c) : " file output; \
+	@read -p "Enter the file name and the output file name (ex: ./Tests/test.c ./Tests/Output/test.c) : " file output; \
 	./$(OUTPUT_DIR_FE)/strucit_frontend $$file $$output
 
 	@if [ $$? -eq 0 ]; then \
@@ -121,7 +121,7 @@ valgrind_test:
 
 # Check memory leaks for a specific file
 valgrind_test_file:
-	@read -p "Enter the file name (ex: ./Tests/test.c) and the output file name (ex: ./Tests/Output/test.c) : " file output; \
+	@read -p "Enter the file name and the output file name (ex: ./Tests/test.c ./Tests/Output/test.c) : " file output; \
 	$(VALGRIND) ./$(OUTPUT_DIR_FE)/strucit_frontend $$file $$output $(HEAD); \
 	if [ $$? -eq 0 ]; then \
 		echo "\033[0;32msuccess\033[0m"; \
@@ -169,22 +169,22 @@ clean_test:
 # Help
 help:
 
-	@echo "\033[0;32mWelcome to the Mini C Compiler\033[0m"
+	@echo "\033[0;35mWelcome to the Mini C Compiler :)\033[0m"
 	@echo ""
-	@echo "Usage : make \033[0;34m[command]\033[0m"
-	@echo "- \033[0;34mall\033[0m : compile the Back-End and the Front-End"
-	@echo "- \033[0;34mstrucit_backend\033[0m : compile the Back-End"
-	@echo "- \033[0;34mstrucit_frontend\033[0m : compile the Front-End"
-	@echo "- \033[0;34mtest\033[0m : test all files in the Test directory"
-	@echo "- \033[0;34mtest_file\033[0m : test a specific file"
-	@echo "- \033[0;34mtest_outputs\033[0m : test all outputs"
-	@echo "- \033[0;34mvalgrind_test\033[0m : check memory leaks for all files in the Test directory"
-	@echo "- \033[0;34mvalgrind_test_file\033[0m : check memory leaks for a specific file"
-	@echo "- \033[0;34mmake_valgrind\033[0m : compile and check memory leaks for all files in the Test directory"
-	@echo "- \033[0;34mmake_valgrind_file\033[0m : compile and check memory leaks for a specific file"
-	@echo "- \033[0;34mclean\033[0m : remove all build files"
-	@echo "- \033[0;34mclean_all\033[0m : remove all build files and executables"
-	@echo "- \033[0;34mclean_test\033[0m : remove all test files"
-	@echo "- \033[0;34mhelp\033[0m : display this help"
+	@echo "Usage : make \033[1;36m[command]\033[0m"
+	@echo "- \033[1;36mall\033[0m : compile the Back-End and the Front-End"
+	@echo "- \033[1;36mstrucit_backend\033[0m : compile the Back-End"
+	@echo "- \033[1;36mstrucit_frontend\033[0m : compile the Front-End"
+	@echo "- \033[1;36mtest\033[0m : test all files in the Test directory"
+	@echo "- \033[1;36mtest_file\033[0m : test a specific file"
+	@echo "- \033[1;36mtest_outputs\033[0m : test all outputs"
+	@echo "- \033[1;36mvalgrind_test\033[0m : check memory leaks for all files in the Test directory"
+	@echo "- \033[1;36mvalgrind_test_file\033[0m : check memory leaks for a specific file"
+	@echo "- \033[1;36mmake_valgrind\033[0m : compile and check memory leaks for all files in the Test directory"
+	@echo "- \033[1;36mmake_valgrind_file\033[0m : compile and check memory leaks for a specific file"
+	@echo "- \033[1;36mclean\033[0m : remove all build files"
+	@echo "- \033[1;36mclean_all\033[0m : remove all build files and executables"
+	@echo "- \033[1;36mclean_test\033[0m : remove all test files"
+	@echo "- \033[1;36mhelp\033[0m : display this help"
 	@echo ""
-	@echo "\033[0;32mEnjoy !\033[0m"
+	@echo "\033[0;35mEnjoy !\033[0m"

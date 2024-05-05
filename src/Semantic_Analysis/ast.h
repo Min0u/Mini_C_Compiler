@@ -14,7 +14,7 @@
 #define _STDC_WANT_LIB_EXT2_ 1
 #endif
 
-typedef enum _ast_type
+typedef enum _Ast_type
 {
     AST_PROGRAM,
     AST_FUNCTION_DEFINITION,
@@ -55,13 +55,13 @@ typedef enum _ast_type
     AST_STAR_DECLARATOR,
     AST_STRUCT_VARIABLE_SPECIFIER,
     AST_EXT_DECLARATION,
-} ast_type;
+} Ast_type;
 
-typedef struct _ast_node
+typedef struct _Ast_node
 {
-    ast_type type;
-    struct _ast_node *parent;
-    struct _ast_node **childrens;
+    Ast_type type;
+    struct _Ast_node *parent;
+    struct _Ast_node **childrens;
     int childrens_count;
     int value;
     char *id;
@@ -75,53 +75,55 @@ typedef struct _ast_node
 
     // Sethi-Ullman number
     int sethi_ullman;
-} ast_node;
+} Ast_node;
 
-ast_node *ast_create_node(ast_type type);
-ast_node *create_int_leaf(int value);
-ast_node *create_id_leaf(char *name);
+Ast_node *ast_create_node(Ast_type type);
+Ast_node *create_int_leaf(int value);
+Ast_node *create_id_leaf(char *name);
 
-void ast_add_child(ast_node *parent, ast_node *child);
+void ast_add_child(Ast_node *parent, Ast_node *child);
 // Add a child to the front of other children
-void ast_add_child_front(ast_node *parent, ast_node *child);
+void ast_add_child_front(Ast_node *parent, Ast_node *child);
 // Add a child before a specific child
-void ast_add_child_before(ast_node *parent, ast_node *child, ast_node *before);
+void ast_add_child_before(Ast_node *parent, Ast_node *child, Ast_node *before);
 // Add a declaration to the declaration list
-ast_node *ast_add_temporary(ast_node *node);
+Ast_node *ast_add_temporary(Ast_node *node);
 
 // Find a declaration list node
-ast_node *find_declaration_list(ast_node *node);
+Ast_node *find_declaration_list(Ast_node *node);
 // Find a parent of a node with a specific type
-ast_node *find_parent(ast_node *node, ast_type type);
+Ast_node *find_parent(Ast_node *node, Ast_type type);
 // Find the last parent before a parent with a specific type
-ast_node *find_last_parent_before(ast_node *node, ast_type type);
+Ast_node *find_last_parent_before(Ast_node *node, Ast_type type);
 // Find an available temporary variable
-ast_node *find_available_temporary(ast_node *node);
+Ast_node *find_available_temporary(Ast_node *node);
+// Find the first identifier starting from a node
+char *find_first_identifier(Ast_node *node);
 
 // Get an available temporary variable
-ast_node *get_temporary(ast_node *node);
+Ast_node *get_temporary(Ast_node *node);
 // Get all available temporary variables
-char **get_all_temporaries(ast_node *node, int *count);
+char **get_all_temporaries(Ast_node *node, int *count);
 
 // Mark a temporary variable as available
-void available_temporary(ast_node *node, char *name);
+void available_temporary(Ast_node *node, char *name);
 
 // Add a variable to the declaration list
-ast_node *split_node_into_var(ast_node *node, char *name);
+Ast_node *split_node_into_var(Ast_node *node, char *name);
 // Add a temporary variable to the declaration list
-ast_node *split_node_into_temp_var(ast_node *node);
+Ast_node *split_node_into_temp_var(Ast_node *node);
 // Get the index of a variable
-int split_op(ast_node *node, char *tab[], bool tab_bool[], int n);
+int split_op(Ast_node *node, char *tab[], bool tab_bool[], int n);
 
 // Sethi-Ullman
-void sethi_ullman(ast_node *node);
+void sethi_ullman(Ast_node *node);
 
 // Transform the AST to TAC (Three Address Code)
-void *tac_transformation(ast_node *node);
+void *tac_transformation(Ast_node *node);
 
-void free_ast(ast_node *root);
+void free_ast(Ast_node *root);
 
-void print_complete_ast(ast_node *root);
-void print_complete_ast_helper(ast_node *node, int indent);
+void print_complete_ast(Ast_node *root);
+void print_complete_ast_helper(Ast_node *node, int indent);
 
 #endif
