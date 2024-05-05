@@ -1,7 +1,4 @@
-void printd(int i)
-{
-	printf("%d\n", i);
-}
+extern void printd(int i);
 
 int calc(int a, int b, int c, int d, int e, int f, int g)
 {
@@ -12,6 +9,7 @@ int calc(int a, int b, int c, int d, int e, int f, int g)
 	int _temp_2;
 	_temp_0 = a + b;
 	_temp_1 = c + d;
+	_temp_1 = -_temp_1;
 	_temp_0 = _temp_0 * _temp_1;
 	_temp_1 = a - c;
 	_temp_0 = _temp_0 / _temp_1;
@@ -24,11 +22,13 @@ int calc(int a, int b, int c, int d, int e, int f, int g)
 	_temp_2 = f + g;
 	_temp_1 = _temp_1 * _temp_2;
 	_temp_2 = b + e;
+	_temp_2 = -_temp_2;
 	_temp_1 = _temp_1 / _temp_2;
 	_temp_0 = _temp_0 + _temp_1;
 	result = _temp_0;
 	_temp_0 = a + b;
 	_temp_1 = c + d;
+	_temp_1 = -_temp_1;
 	_temp_0 = _temp_0 * _temp_1;
 	_temp_1 = a - c;
 	_temp_0 = _temp_0 / _temp_1;
@@ -41,6 +41,7 @@ int calc(int a, int b, int c, int d, int e, int f, int g)
 	_temp_2 = f + g;
 	_temp_1 = _temp_1 * _temp_2;
 	_temp_2 = b + e;
+	_temp_2 = -_temp_2;
 	_temp_1 = _temp_1 / _temp_2;
 	_temp_0 = _temp_0 + _temp_1;
 	result2 = _temp_0;
@@ -56,8 +57,11 @@ int main()
 	int e;
 	int f;
 	int g;
+	int h;
+	int i;
 	int result;
 	int _temp_3;
+	int _temp_4;
 	_temp_3 = 1 + 2;
 	_temp_3 = _temp_3 + 3;
 	_temp_3 = 2 + _temp_3;
@@ -69,10 +73,38 @@ int main()
 	e = 5;
 	f = 6;
 	g = 7;
+	_temp_3 = -1;
+	_temp_3 = _temp_3 + 2;
+	h = _temp_3;
 	result = calc(a, b, c, d, e, f, g);
 	_temp_3 = result + a;
 	_temp_3 = _temp_3 + b;
 	printd(_temp_3);
+	_temp_3 = -1000;
+	i = 0;
+test_0:
+	if (i >= _temp_3) goto false_0;
+	{
+		printd(i);
+	}
+	i = i + 1;
+	goto test_0;
+false_0:
+	_temp_3 = -3;
+	_temp_4 = -20;
+test_1:
+	if (_temp_3 < _temp_4) goto false_1;
+	{
+		int _temp_5;
+		_temp_5 = -3;
+		printd(_temp_5);
+		_temp_5 = -3;
+		_temp_5 = _temp_5 - 1;
+		-3 = _temp_5;
+	};
+	goto test_1;
+
+false_1:
 	return 0;
 }
 

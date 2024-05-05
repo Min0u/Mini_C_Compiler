@@ -406,6 +406,56 @@ int split_op(ast_node *node, char *var[], bool used[], int n)
         return split_op(node->childrens[0], var, used, n);
     }
 
+    if (node->type == AST_UNARY)
+    {
+        int split = split_op(node->childrens[1], var, used, n);
+
+        if (split != -1)
+        {
+            used[split] = false;
+        }
+
+        int temp_index = -1;
+        for (int i = 0; i < n; i++)
+        {
+            if (used[i] == false)
+            {
+                temp_index = i;
+                used[i] = true;
+                break;
+            }
+        }
+
+        ast_node *assignment = ast_create_node(AST_ASSIGNMENT);
+        ast_node *identifier = create_id_leaf(strdup(var[temp_index]));
+        ast_node *unary = ast_create_node(AST_UNARY);
+        ast_node *op = ast_create_node(AST_UNARY_OP);
+
+        op->id = node->childrens[0]->id;
+
+        ast_add_child(unary, op);
+
+        if (split == -1)
+        {
+            ast_add_child(unary, node->childrens[1]);
+        }
+        else
+        {
+            ast_node *temp = create_id_leaf(strdup(var[split]));
+            ast_add_child(unary, temp);
+        }
+
+        ast_add_child(assignment, identifier);
+        ast_add_child(assignment, unary);
+
+        ast_node *statement_list = find_parent(node, AST_STATEMENT_LIST);
+        ast_node *before_statement = find_last_parent_before(node, AST_STATEMENT_LIST);
+
+        ast_add_child_before(statement_list, assignment, before_statement);
+
+        return temp_index;
+    }
+
     if (node->sethi_ullman > 0 && node->type == AST_OP)
     {
         int left_i = split_op(node->childrens[0], var, used, n);
@@ -436,6 +486,7 @@ int split_op(ast_node *node, char *var[], bool used[], int n)
         ast_node *assignment = ast_create_node(AST_ASSIGNMENT);
         ast_node *identifier = create_id_leaf(strdup(var[temp_index]));
         ast_node *op = ast_create_node(AST_OP);
+
         op->id = node->id;
 
         if (left_i == -1)
@@ -566,12 +617,12 @@ void *tac_transformation(ast_node *node)
 
         // Split if the children are operations
 
-        if (node->childrens[0]->type == AST_OP)
+        if (node->childrens[0]->type == AST_OP || node->childrens[0]->type == AST_UNARY)
         {
             node->childrens[0] = split_node_into_temp_var(node->childrens[0]);
             split_left = true;
         }
-        if (node->childrens[1]->type == AST_OP)
+        if (node->childrens[1]->type == AST_OP || node->childrens[1]->type == AST_UNARY)
         {
             node->childrens[1] = split_node_into_temp_var(node->childrens[1]);
             split_right = true;
@@ -634,7 +685,7 @@ void *tac_transformation(ast_node *node)
         ast_node *left = node->childrens[0];
         ast_node *right = node->childrens[1];
 
-        if (left->type == AST_OP || right->type == AST_OP || left->type == AST_PRIMARY_EXPRESSION || right->type == AST_PRIMARY_EXPRESSION)
+        if (left->type == AST_OP || right->type == AST_OP || left->type == AST_PRIMARY_EXPRESSION || right->type == AST_PRIMARY_EXPRESSION || left->type == AST_UNARY || right->type == AST_UNARY)
         {
             sethi_ullman(node);
 
@@ -665,7 +716,7 @@ void *tac_transformation(ast_node *node)
                 }
             }
         }
-    break;
+        break;
     }
     default:
         for (int i = 0; i < node->childrens_count; i++)
