@@ -52,7 +52,7 @@ exit(SYNTAX_ERROR);
 %token STRUCT
 %token IF ELSE WHILE FOR RETURN
 
-%type < node > primary_expression postfix_expression argument_expression_list unary_expression unary_operator multiplicative_expression additive_expression relational_expression equality_expression logical_and_expression logical_or_expression expression declaration declaration_specifiers type_specifier struct_specifier struct_declaration_list struct_declaration declarator direct_declarator parameter_list parameter_declaration statement compound_statement  declaration_list statement_list expression_statement selection_statement iteration_statement jump_statement program external_declaration function_definition
+%type < node > primary_expression postfix_expression argument_expression_list direct_declarator_start struct_identifier unary_expression unary_operator multiplicative_expression additive_expression relational_expression equality_expression logical_and_expression logical_or_expression expression declaration declaration_specifiers type_specifier struct_specifier struct_declaration_list struct_declaration declarator direct_declarator parameter_list parameter_declaration statement compound_statement  declaration_list statement_list expression_statement selection_statement iteration_statement jump_statement program external_declaration function function_definition
 
 %left '+' '-'
 %left '*' '/'
@@ -66,7 +66,14 @@ exit(SYNTAX_ERROR);
 
 primary_expression
         : IDENTIFIER
-        {
+        {       
+                Symbol *sym = lookup_stack(stack, $1->id);
+                if (!sym)
+                {
+                        printf("\033[1;31mError: \033[0mUnknown identifier \033[1m\"%s\"\033[0m (line %d)\n", $1->id, yylineno);
+                        YYERROR;
+                }
+
                 $$ = $1;
         }
         | CONSTANT
@@ -332,18 +339,40 @@ declaration
 
                         if (id != NULL)
                         {
-                                if (lookup_stack_top(stack, id))
+                                Symbol *sym = lookup_stack_top(stack, id);
+                                if (sym)
                                 {
-                                        printf("\033[1;31mError: \033[0mVariable \033[1m\"%s\" \033[0malready declared (line %d)\033[0m\n", id, yylineno);
+                                        print_error(sym, id, yylineno);
                                         YYERROR;
                                 }
 
-                                if (lookup_stack(stack, id))
+                                Symbol *sym2 = lookup_stack(stack, id);
+                                if (sym2)
                                 {
-                                        printf("\033[1;35mWarning: \033[0mOverwriting variable \033[1m\"%s\" \033[0m(line %d)\033[0m\n", id, yylineno);
+                                        print_warning(sym2, id, yylineno);
                                 }
                                 
                                 Symbol *symbol = create_symbol(id, 4, IDENTIFIER_SYMBOL);
+                                push_symbol(stack, id, symbol);
+                        }
+                } 
+                else if ($1->type == AST_EXT_DECLARATION || $2->type == AST_DIRECT_DECLARATOR_END)
+                {
+                        char *id = find_first_identifier($2);
+
+                        if (id != NULL)
+                        {
+                                Symbol *sym = lookup_stack(stack, id);
+
+                                if (sym)
+                                {
+                                        print_error(sym, id, yylineno);
+                                        YYERROR;
+                                }
+
+                                pop(stack);
+
+                                Symbol *symbol = create_symbol(id, -1, FUNCTION_SYMBOL);
                                 push_symbol(stack, id, symbol);
                         }
                 }
@@ -389,12 +418,34 @@ type_specifier
         }
         ;
 
+struct_identifier
+        : STRUCT IDENTIFIER
+        {
+                $$ = $2;
+
+                char *id = find_first_identifier($2);
+
+                if (id != NULL)
+                {
+                        Symbol *s = lookup_stack(stack, id);
+                        if (s)
+                        {
+                                print_error(s, id, yylineno);
+                                YYERROR;
+                        }
+
+                        Symbol *symbol = create_symbol(id, 0, STRUCT_SYMBOL);
+                        push_symbol(stack, id, symbol);
+                }
+        }
+        ;
+
 struct_specifier
-        : STRUCT IDENTIFIER open_brace struct_declaration_list close_brace
+        : struct_identifier open_brace struct_declaration_list close_brace
         {
                 $$ = ast_create_node(AST_STRUCT_VARIABLE_SPECIFIER);
-                ast_add_child($$, $2);
-                ast_add_child($$, $4);
+                ast_add_child($$, $1);
+                ast_add_child($$, $3);
         }
         | STRUCT open_brace struct_declaration_list close_brace
         {
@@ -441,6 +492,16 @@ declarator
         }
         ;
 
+direct_declarator_start
+        : direct_declarator '('
+        {
+                $$ = ast_create_node(AST_DIRECT_DECLARATOR);
+                ast_add_child($$, $1);
+        
+                Hash_map *hashmap = create_hash_map();
+                push(stack, hashmap);
+        }
+
 direct_declarator
         : IDENTIFIER
         {
@@ -451,15 +512,15 @@ direct_declarator
                 $$ = ast_create_node(AST_DECLARATOR);
                 ast_add_child($$, $2);
         }
-        | direct_declarator '(' parameter_list ')'
+        | direct_declarator_start parameter_list ')'
         {
-                $$ = ast_create_node(AST_DIRECT_DECLARATOR);
+                $$ = ast_create_node(AST_DIRECT_DECLARATOR_END);
                 ast_add_child($$, $1);
-                ast_add_child($$, $3);
+                ast_add_child($$, $2);
         }
-        | direct_declarator '(' ')'
+        | direct_declarator_start ')'
         {
-                $$ = ast_create_node(AST_DIRECT_DECLARATOR);
+                $$ = ast_create_node(AST_DIRECT_DECLARATOR_END);
                 ast_add_child($$, $1);
         }
         ;
@@ -483,6 +544,27 @@ parameter_declaration
                 $$ = ast_create_node(AST_PARAMETER_DECLARATION);
                 ast_add_child($$, $1);
                 ast_add_child($$, $2);
+
+                char *id = find_first_identifier($2);
+
+                if (id != NULL)
+                {
+                        Symbol *s1 = lookup_stack_top(stack, id);
+                        if (s1)
+                        {
+                                print_error(s1, id, yylineno);
+                                YYERROR;
+                        }
+
+                        Symbol *s2 = lookup_stack(stack, id);
+                        if (s2)
+                        {
+                                print_warning(s2, id, yylineno);
+                        }
+
+                        Symbol *symbol = create_symbol(id, 4, IDENTIFIER_SYMBOL);
+                        push_symbol(stack, id, symbol);
+                }
         }
         ;
 
@@ -634,7 +716,7 @@ main_program
         : program
         {
                 tac_transformation($1);
-                // print_complete_ast($1);
+//                print_complete_ast($1);
                 write_code($1, yyout);
                 free_ast($1);
         }
@@ -664,13 +746,37 @@ external_declaration
         }
         ;
 
-function_definition
-        : declaration_specifiers declarator compound_statement
+function
+        : declaration_specifiers declarator
         {
-                $$ = ast_create_node(AST_FUNCTION_DEFINITION);
+                $$ = ast_create_node(AST_FUNCTION_DEFINITION);  
                 ast_add_child($$, $1);
                 ast_add_child($$, $2);
-                ast_add_child($$, $3);
+
+                char *id = find_first_identifier($2);
+
+                if (id != NULL)
+                {
+                        Symbol *s = lookup_stack_top(stack, id);
+                        if (s)
+                        {
+                                print_error(s, id, yylineno);
+                                YYERROR;
+                        }
+
+                        Symbol *symbol = create_symbol(id, -1, FUNCTION_SYMBOL);
+                        push_symbol_next(stack, id, symbol);
+                }
+
+        }
+
+function_definition
+        : function compound_statement
+        {
+                ast_add_child($1, $2);
+                $$ = $1;
+
+                pop(stack);
         }
         ;
 

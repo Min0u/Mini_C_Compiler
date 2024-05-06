@@ -22,6 +22,19 @@ void push_symbol(Stack *s, char *key, Symbol *value)
     insert(s->top->map, key, value);
 }
 
+void push_symbol_next(Stack *s, char *key, Symbol *value)
+{
+    Stack_node *node = s->top->next;
+    if (node == NULL)
+    {
+        node = (Stack_node *)malloc(sizeof(Stack_node));
+        node->map = create_hash_map();
+        node->next = NULL;
+        s->top->next = node;
+    }
+    insert(node->map, key, value);
+}
+
 Hash_map *pop(Stack *s)
 {
     if (is_empty(s))

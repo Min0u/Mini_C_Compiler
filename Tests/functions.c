@@ -8,7 +8,6 @@ int foo (int n)
   return (n*(*fact)(n-1));
 }
 
-
 int main() {
   fact=&foo;
   printd((*fact)(10));

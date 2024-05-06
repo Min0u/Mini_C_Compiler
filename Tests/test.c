@@ -27,7 +27,6 @@ int main()
     for (i = 0; i < 10; i = i + 1)
     {
         int a;
-        int a;
         printd(i);
     }
 

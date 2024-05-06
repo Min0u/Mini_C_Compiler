@@ -25,6 +25,8 @@ Stack *create_stack();
 void push(Stack *s, Hash_map *map);
 // Insert symbol into the top of the stack
 void push_symbol(Stack *s, char *key, Symbol *value);
+// Insert symbol into the next stack
+void push_symbol_next(Stack *s, char *key, Symbol *value);
 // Pop the top element from the stack : return the top element and remove it
 struct _Hash_map *pop(Stack *s);
 // Peek the top element from the stack : return the top element without removing it

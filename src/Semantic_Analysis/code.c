@@ -1,7 +1,61 @@
+#include <stdio.h>
+
 #include "code.h"
 
 int depth = 0;
 int bool_counter = 0;
+
+void print_error(Symbol *symbol, char *id, int line)
+{
+    print_color("31", "Error : ");
+
+    char *error;
+
+    if (symbol->type == FUNCTION_SYMBOL)
+    {
+        asprintf(&error, "Function \033[1m\"%s\"\033[0m already declared (line %d)", id, line);
+    }
+    else if (symbol->type == IDENTIFIER_SYMBOL)
+    {
+        asprintf(&error, "Identifier \033[1m\"%s\"\033[0m already declared (line %d)", id, line);
+    }
+    else
+    {
+        asprintf(&error, "Structure \033[1m\"%s\"\033[0m already declared (line %d)", id, line);
+    }
+
+    printf("%s", error);
+}
+
+void print_warning(Symbol *symbol, char *id, int line)
+{
+    print_color("35", "Warning : ");
+
+    char *warning;
+
+    if (symbol->type == FUNCTION_SYMBOL)
+    {
+        asprintf(&warning, "Overriding function \033[1m\"%s\"\033[0m (line %d)", id, line);
+    }
+    else if (symbol->type == IDENTIFIER_SYMBOL)
+    {
+        asprintf(&warning, "Overriding identifier \033[1m\"%s\"\033[0m (line %d)", id, line);
+    }
+    else
+    {
+        asprintf(&warning, "Overriding structure \033[1m\"%s\"\033[0m (line %d)", id, line);
+    }
+
+    printf("%s\n", warning);
+}
+
+void print_color(char *color, char *text)
+{
+    printf("\033[1;%sm%s", color, text);
+    printf("\033[0m");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
 
 void tab_depth(FILE *file)
 {
@@ -47,7 +101,7 @@ char *inv_op(char *op)
     {
         return "||";
     }
-    
+
     return NULL;
 }
 
@@ -80,7 +134,6 @@ void write_code(Ast_node *node, FILE *file)
         fprintf(file, "extern ");
         write_code(node->childrens[0], file);
         break;
-
     case AST_FUNCTION_DEFINITION:
         for (int i = 0; i < node->childrens_count; i++)
         {
@@ -228,7 +281,7 @@ void write_code(Ast_node *node, FILE *file)
         }
         break;
     case AST_EXPRESSION_STATEMENT:
-        if (node->parent !=NULL && node->parent->type == AST_FOR)
+        if (node->parent != NULL && node->parent->type == AST_FOR)
         {
             node->childrens[0]->true_label = node->true_label;
             node->childrens[0]->false_label = node->false_label;
@@ -242,12 +295,12 @@ void write_code(Ast_node *node, FILE *file)
             {
                 tab_depth(file);
             }
-            
+
             write_code(node->childrens[i], file);
             if (node->childrens[i]->type == AST_FOR || node->childrens[i]->type == AST_IF_ELSE || node->childrens[i]->type == AST_WHILE || node->childrens[i]->type == AST_IF)
             {
                 fprintf(file, "\n");
-            } 
+            }
             else
             {
                 fprintf(file, ";\n");
@@ -277,7 +330,7 @@ void write_code(Ast_node *node, FILE *file)
         depth--;
         tab_depth(file);
         fprintf(file, "}");
-        
+
         break;
     case AST_PARAMETER_DECLARATION:
         write_code(node->childrens[0], file);
@@ -295,18 +348,16 @@ void write_code(Ast_node *node, FILE *file)
         }
         break;
     case AST_DIRECT_DECLARATOR:
-        if (node->childrens_count == 1)
+        write_code(node->childrens[0], file);
+        break;
+    case AST_DIRECT_DECLARATOR_END:
+        write_code(node->childrens[0], file);
+        fprintf(file, "(");
+        if (node->childrens_count == 2)
         {
-            write_code(node->childrens[0], file);
-            fprintf(file, "()");
-        }
-        else
-        {
-            write_code(node->childrens[0], file);
-            fprintf(file, "(");
             write_code(node->childrens[1], file);
-            fprintf(file, ")");
         }
+        fprintf(file, ")");
         break;
     case AST_DECLARATOR:
         fprintf(file, "(");
@@ -324,7 +375,7 @@ void write_code(Ast_node *node, FILE *file)
         break;
     case AST_STRUCT_DECLARATION_LIST:
         for (int i = 0; i < node->childrens_count; i++)
-        {   
+        {
             depth++;
             tab_depth(file);
             write_code(node->childrens[i], file);

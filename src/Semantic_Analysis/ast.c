@@ -118,7 +118,7 @@ Ast_node *ast_add_temporary(Ast_node *node)
     Ast_node *specifier = ast_create_node(AST_TYPE_SPECIFIER);
     specifier->id = "int";
 
-    char *name;
+    char *name ;
     asprintf(&name, "_temp_%d", var_count++);
     // identifier node for the declaration list
     Ast_node *identifier = create_id_leaf(strdup(name));
@@ -828,6 +828,9 @@ void print_complete_ast_helper(Ast_node *node, int indent)
         break;
     case AST_DIRECT_DECLARATOR:
         printf("Direct Declarator\n");
+        break;
+    case AST_DIRECT_DECLARATOR_END:
+        printf("Direct Declarator End\n");
         break;
     case AST_STRUCT_DECLARATION:
         printf("Struct Declaration\n");

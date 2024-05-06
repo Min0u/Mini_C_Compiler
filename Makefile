@@ -1,7 +1,7 @@
 CC = gcc
 LEX = flex
 BISON = bison
-CFLAGS = -g -lfl -W -Wall -Wextra -Wpedantic
+CFLAGS = -g -lfl -W -Wall -Wextra -Wpedantic -D_GNU_SOURCE
 
 # Valgrind : check memory leaks
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all

@@ -6,6 +6,11 @@
 #include <string.h>
 
 #include "ast.h"
+#include "symbol.h"
+
+void print_error(Symbol *symbol, char *id, int line);
+void print_warning(Symbol *symbol, char *id, int line);
+void print_color(char *color, char *text);
 
 void tab_depth(FILE *file);
 
