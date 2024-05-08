@@ -66,7 +66,9 @@ exit(SYNTAX_ERROR);
 
 primary_expression
         : IDENTIFIER
-        {       
+        {      
+                $$ = $1; 
+
                 Symbol *sym = lookup_stack(stack, $1->id);
                 if (!sym)
                 {
@@ -74,7 +76,7 @@ primary_expression
                         YYERROR;
                 }
 
-                $$ = $1;
+                $1->size = sym->size;
         }
         | CONSTANT
         {
@@ -145,11 +147,35 @@ unary_expression
         {
                 $$ = ast_create_node(AST_UNARY_SIZEOF);
                 ast_add_child($$, $2);
+
+                char *id = find_first_identifier($2);
+
+                Symbol *sym = lookup_stack(stack, id);
+                if (sym)
+                {
+                        $$->size = sym->size;
+                }
         }
         | SIZEOF '(' type_specifier ')'
         {
                 $$ = ast_create_node(AST_UNARY_SIZEOF);
                 ast_add_child($$, $3);
+
+                if ($3->type == AST_TYPE_SPECIFIER)
+                {
+                        if (strcmp($3->id, "int") == 0)
+                        {
+                                $$->size = 4;
+                        }
+                        else if (strcmp($3->id, "void") == 0)
+                        {
+                                $$->size = 0;
+                        }
+                        else
+                        {
+                                $$->size = $3->size;
+                        }
+                }
         }
         ;
 
@@ -352,8 +378,11 @@ declaration
                                         print_warning(sym2, id, yylineno);
                                 }
                                 
-                                Symbol *symbol = create_symbol(id, 4, IDENTIFIER_SYMBOL);
+                                Symbol *symbol = create_symbol(id, $1->size, IDENTIFIER_SYMBOL);
                                 push_symbol(stack, id, symbol);
+
+                                $$->size = $1->size;
+
                         }
                 } 
                 else if ($1->type == AST_EXT_DECLARATION || $2->type == AST_DIRECT_DECLARATOR_END)
@@ -402,12 +431,14 @@ type_specifier
                 $$ = ast_create_node(AST_TYPE_SPECIFIER);
 
                 $$->id = "void";
+                $$->size = 0;
         }
         | INT
         {
                 $$ = ast_create_node(AST_TYPE_SPECIFIER);
 
                 $$->id = "int";
+                $$->size = 4;
         }
         | struct_specifier
         {
@@ -415,6 +446,7 @@ type_specifier
                 ast_add_child($$, $1);
 
                 $$->id = "struct";
+                $$->size = $1->size;
         }
         ;
 
@@ -446,15 +478,67 @@ struct_specifier
                 $$ = ast_create_node(AST_STRUCT_VARIABLE_SPECIFIER);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                char *id = find_first_identifier($1);
+
+                Symbol *s = lookup_stack(stack, id);
+
+                int offset = 0;
+
+                for (int i = 0; i < $3->children_count; i++)
+                {
+                        Ast_node *declaration = $3->children[i];
+                        Ast_node *declarator = declaration->children[1];
+
+                        declaration->offset = offset;
+                        offset += declaration->size;
+
+                        char *id1 = find_first_identifier(declarator);
+
+                        Symbol *s1 = create_symbol(id1, declaration->size, IDENTIFIER_SYMBOL);
+
+                        s1->struct_name = id;
+
+                        if(declaration->children[0]->type == AST_TYPE_SPECIFIER)
+                        {
+                                s1->type_name = declaration->children[0]->id;
+                        }
+
+                        declaration->children[0]->offset = declaration->offset;
+
+                        add_symbol_child(s, s1);
+                }
+
+                $$->size = $3->size;
+
+                s->size = $3->size;
         }
         | STRUCT open_brace struct_declaration_list close_brace
         {
                 $$ = ast_create_node(AST_STRUCT_SPECIFIER);
                 ast_add_child($$, $3);
+
+                $$->size = $3->size;
         }
         | STRUCT IDENTIFIER
         {
                 $$ = $2;
+
+                Symbol *s = lookup_stack(stack, $2->id);
+
+                if (!s)
+                {
+                        printf("\033[1;31mError: \033[0mUnknown structure identifier \033[1m\"%s\"\033[0m (line %d)\n", $2->id, yylineno);
+                        YYERROR;
+                }
+
+                $$->size = s->size;  
+
+                if (s->type != STRUCT_SYMBOL)
+                {
+                        printf("\033[1;31mError: \033[0mIdentifier \033[1m\"%s\"\033[0m is not a structure (line %d)\n", $2->id, yylineno);
+                        YYERROR;
+                }      
         }
         ;
 
@@ -463,11 +547,15 @@ struct_declaration_list
         {
                 $$ = ast_create_node(AST_STRUCT_DECLARATION_LIST);
                 ast_add_child($$, $1); 
+
+                $$->size = $1->size;
         }
         | struct_declaration_list struct_declaration
         {
                 ast_add_child($1, $2);
                 $$ = $1;
+
+                $$->size = $1->size + $2->size;
         }
         ;
 
@@ -477,6 +565,8 @@ struct_declaration
                 $$ = ast_create_node(AST_STRUCT_DECLARATION);
                 ast_add_child($$, $1);
                 ast_add_child($$, $2);
+
+                $$->size = $1->size;
         }
         ;
 
@@ -809,12 +899,11 @@ int main(int argc, char **argv)
                 return 1;
         }
 
-        printf("\033[0;34mParsing started...\033[0m\n");
+        printf("\033[0;34mStarting compilation...\033[0m\n");
 
         yyparse();
 
-
-        printf("\033[0;34mParsing done :)\033[0m\n");
+        printf("\033[0;34mCompilation finished :)\033[0m\n");
 
         fclose(yyin);
         fclose(yyout);

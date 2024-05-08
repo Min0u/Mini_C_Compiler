@@ -22,6 +22,7 @@ int main()
     int g;
     int h;
     int i;
+    void *s;
     int result;
 
     for (i = 0; i < 10; i = i + 1)
@@ -42,7 +43,7 @@ int main()
 
     h = - 1 + 2;
 
-    result = calc(a, b, c, d, e, f, g);
+    result = calc(a, b, c, d, e, f, s);
 
     printd(result + a + b);
 

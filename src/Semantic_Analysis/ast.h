@@ -61,13 +61,20 @@ typedef enum _Ast_type
 typedef struct _Ast_node
 {
     Ast_type type;
+    char *type_name;
+
     struct _Ast_node *parent;
-    struct _Ast_node **childrens;
-    int childrens_count;
+    struct _Ast_node **children;
+    int children_count;
+
     int value;
     char *id;
 
-    // For boolean expressions
+    // Variable size
+    int size;
+    int offset;
+
+    // Boolean expressions
     int true_label;
     int false_label;
 
@@ -88,7 +95,7 @@ void ast_add_child_front(Ast_node *parent, Ast_node *child);
 // Add a child before a specific child
 void ast_add_child_before(Ast_node *parent, Ast_node *child, Ast_node *before);
 // Add a declaration to the declaration list
-Ast_node *ast_add_temporary(Ast_node *node);
+Ast_node *ast_add_temporary(Ast_node *node, char *type, bool pointer);
 
 // Find a declaration list node
 Ast_node *find_declaration_list(Ast_node *node);
@@ -97,12 +104,12 @@ Ast_node *find_parent(Ast_node *node, Ast_type type);
 // Find the last parent before a parent with a specific type
 Ast_node *find_last_parent_before(Ast_node *node, Ast_type type);
 // Find an available temporary variable
-Ast_node *find_available_temporary(Ast_node *node);
+Ast_node *find_available_temporary(Ast_node *node, char *type, bool pointer);
 // Find the first identifier starting from a node
 char *find_first_identifier(Ast_node *node);
 
 // Get an available temporary variable
-Ast_node *get_temporary(Ast_node *node);
+Ast_node *get_temporary(Ast_node *node, char *type, bool pointer);
 // Get all available temporary variables
 char **get_all_temporaries(Ast_node *node, int *count);
 
@@ -112,7 +119,7 @@ void available_temporary(Ast_node *node, char *name);
 // Add a variable to the declaration list
 Ast_node *split_node_into_var(Ast_node *node, char *name);
 // Add a temporary variable to the declaration list
-Ast_node *split_node_into_temp_var(Ast_node *node);
+Ast_node *split_node_into_temp_var(Ast_node *node, char *type, bool pointer);
 // Get the index of a variable
 int split_op(Ast_node *node, char *tab[], bool tab_bool[], int n);
 

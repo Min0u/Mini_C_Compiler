@@ -59,6 +59,7 @@ int main()
 	int g;
 	int h;
 	int i;
+	void *s;
 	int result;
 	int _temp_3;
 	i = 0;
@@ -85,7 +86,7 @@ false_0:
 	_temp_3 = -1;
 	_temp_3 = _temp_3 + 2;
 	h = _temp_3;
-	result = calc(a, b, c, d, e, f, g);
+	result = calc(a, b, c, d, e, f, s);
 	_temp_3 = result + a;
 	_temp_3 = _temp_3 + b;
 	printd(_temp_3);
