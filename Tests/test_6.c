@@ -15,6 +15,17 @@ void print_point(struct Point *p) {
   printd(p->z);
 }
 
+int print_1()
+{
+	printd(1);
+	return 0;
+}
+
+int add(int a, int b)
+{
+  return a + b;
+}
+
 int main(int a) {
   struct Point *p;
   struct Point *p2;
@@ -22,6 +33,11 @@ int main(int a) {
   int y;
   int z;
   void s;
+  /* Error: s is not a struct */
+  struct s t; 
+
+
+  a = -1 + 2 + (3 + 4 + 5) + (2 + 3);
 
   p = malloc(sizeof(struct Point));
 
@@ -40,8 +56,7 @@ int main(int a) {
   print_point(p);
   print_point(p->next);
   
-  /* Error: 'y' is not a struct */
-  print_point(y->p); 
+  printd(add(1, 2));
 
   return 0;
 }

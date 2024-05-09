@@ -18,6 +18,18 @@ The compiler generates three-address code from the source code written in STRUCI
 `Tests/` - Contains test cases for the project.     
 `Tests/Output/` - Contains the output of the test cases.
 
+## Error Handling ##
+
+The Mini C Compiler has built-in error handling for both syntax and semantic errors. 
+
+For syntax errors, the Bison parser will automatically detect any violations of the grammar rules. If an error is detected, the parser will attempt to recover and continue parsing, if possible. Custom error messages can be provided by defining the `yyerror` function in the Bison grammar file.
+
+For semantic errors, such as type mismatches or undeclared variables, the compiler uses a symbol table to keep track of variable and type declarations. If a semantic error is detected, an error message will be printed to the console, and the compilation process will be halted.
+
+Please note that while the compiler is designed to handle a wide range of errors, it may not catch all possible errors in your STRUCIT-frontend code. Some complex or obscure errors may go undetected.
+
+To see the error handling in action, you can intentionally introduce errors into your STRUCIT-frontend code and observe the error messages produced by the compiler.
+
 ## How to Run ##
 
 Make sure you have `flex`, `bison`, and `gcc` installed on your system.

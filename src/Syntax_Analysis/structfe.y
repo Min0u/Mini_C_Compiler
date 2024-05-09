@@ -13,8 +13,7 @@
         #include <stdlib.h>
         #include "y.tab.h"
 
-        #define SEMANTIC_ERROR 2
-        #define SYNTAX_ERROR 3
+        #define SYNTAX_ERROR 1
 }
 
 %{
@@ -24,6 +23,7 @@ extern FILE *yyin;
 extern FILE *yyout;
 int yylex();
 
+char *current_function;
 Stack *stack;
 
 int yyerror(const char *s ) 
@@ -79,6 +79,7 @@ primary_expression
                 $1->size = sym->size;
                 $1->type_name = sym->type_name;
                 $1->struct_name = sym->struct_name;
+                $1->pointer = sym->pointer;
         }
         | CONSTANT
         {
@@ -94,6 +95,8 @@ primary_expression
 
                 $$->size = $2->size;
                 $$->type_name = $2->type_name;
+                $$->struct_name = $2->struct_name;
+                $$->pointer = $2->pointer;
         }
         ;
 
@@ -104,7 +107,7 @@ postfix_expression
         }
         | postfix_expression '(' ')'
         {
-                $$ = ast_create_node(AST_POSTFIX_NO_ARGUMENT);
+                $$ = ast_create_node(AST_POSTFIX);
                 ast_add_child($$, $1);
 
                 char *id = find_first_identifier($1);
@@ -117,17 +120,20 @@ postfix_expression
                         YYERROR;
                 }
 
-                if (sym->child_count != 0)
+                if ((sym->child_count - 1) != 0)
                 {
-                        printf("\033[1;31mError: \033[0mFunction \033[1m\"%s\"\033[0m requires %d arguments but none were given (line %d)\n", id, sym->child_count, yylineno);
+                        printf("\033[1;31mError: \033[0mFunction \033[1m\"%s\"\033[0m requires %d arguments but none were given (line %d)\n", id, sym->child_count - 1, yylineno);
                         YYERROR;
                 }
 
-                $$->type_name = "int";
+                $$->type_name = sym->children[0]->type_name;
+                $$->size = sym->children[0]->size;
+                $$->struct_name = sym->children[0]->struct_name;
+                $$->pointer = sym->children[0]->pointer;
         }
         | postfix_expression '(' argument_expression_list ')'
         {
-                $$ = ast_create_node(AST_POSTFIX_ARGUMENT);
+                $$ = ast_create_node(AST_POSTFIX);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
 
@@ -143,36 +149,39 @@ postfix_expression
 
                 if ($3->children_count != 0)
                 {
-                        if (sym->child_count != $3->children_count)
+                        if ((sym->child_count - 1) != $3->children_count)
                         {
-                                printf("\033[1;31mError: \033[0mFunction \033[1m\"%s\"\033[0m requires %d arguments but %d were given (line %d)\n", id, sym->child_count, $3->children_count, yylineno);
+                                printf("\033[1;31mError: \033[0mFunction \033[1m\"%s\"\033[0m requires %d arguments but %d were given (line %d)\n", id, sym->child_count - 1, $3->children_count, yylineno);
                                 YYERROR;
                         }
                 }
 
-                $$->type_name = "int";
+                $$->type_name = sym->children[0]->type_name;
+                $$->size = sym->children[0]->size;
+                $$->struct_name = sym->children[0]->struct_name;
+                $$->pointer = sym->children[0]->pointer;
 
                 for (int i = 0; i < $3->children_count; i++)
                 {
                         Ast_node *argument = $3->children[i];
 
-                        if (sym->pointer)
+                        if (sym->children[i+1]->pointer)
                         {
                                 continue;
                         }
 
-                        if (strcmp(sym->children[i]->type_name, argument->type_name) != 0)
+                        if (strcmp(sym->children[i+1]->type_name, argument->type_name) != 0)
                         {
-                                printf("\033[1;31mError: \033[0mExpected argument of type \033[1m\"%s\"\033[0m but got \033[1m\"%s\"\033[0m (line %d)\n", sym->children[i]->type_name, argument->type_name, yylineno);
+                                printf("\033[1;31mError: \033[0mExpected argument of type \033[1m\"%s\"\033[0m but got \033[1m\"%s\"\033[0m (line %d)\n", sym->children[i+1]->type_name, argument->type_name, yylineno);
                                 YYERROR;
                         }
 
                         if (strcmp(argument->type_name, "struct") == 0)
                         {
-                                if (strcmp(sym->children[i]->struct_name, argument->struct_name) != 0)
+                                if (strcmp(sym->children[i+1]->struct_name, argument->struct_name) != 0)
                                 {
                                         printf("yes\n");
-                                        printf("\033[1;31mError: \033[0mExpected argument of type \033[1m\"%s\"\033[0m but got \033[1m\"%s\"\033[0m (line %d)\n", sym->children[i]->struct_name, argument->struct_name, yylineno);
+                                        printf("\033[1;31mError: \033[0mExpected argument of type \033[1m\"%s\"\033[0m but got \033[1m\"%s\"\033[0m (line %d)\n", sym->children[i+1]->struct_name, argument->struct_name, yylineno);
                                         YYERROR;
                                 }
                         }
@@ -190,7 +199,7 @@ postfix_expression
 
                 if (strcmp(sym->type_name, "struct") != 0)
                 {
-                        printf("\033[1;31mError: \033[0mUnknown struct member \033[1m\"%s\"\033[0m (line %d)\n", $3->id, yylineno);
+                        printf("\033[1;31mError: \033[0mUnknown structure \033[1m\"%s\"\033[0m (line %d)\n", id, yylineno);
                         YYERROR;
                 }
 
@@ -199,7 +208,7 @@ postfix_expression
 
                 if (!s1)
                 {
-                        printf("\033[1;31mError: \033[0mUnknown struct member \033[1m\"%s\"\033[0m (line %d)\n", $3->id, yylineno);
+                        printf("\033[1;31mError: \033[0mUnknown structure member \033[1m\"%s\"\033[0m (line %d)\n", $3->id, yylineno);
                         YYERROR;
                 }
 
@@ -207,6 +216,7 @@ postfix_expression
                 $$->type_name = s1->type_name;
                 $$->size = s1->size;
                 $$->struct_name = s1->struct_name;
+                $$->pointer = s1->pointer;
         }
         ;
 
@@ -464,6 +474,21 @@ expression
                 $$ = ast_create_node(AST_ASSIGNMENT);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                if (!($1->pointer && $3->pointer))
+                {
+                        if (strcmp($1->type_name, $3->type_name) != 0)
+                        {
+                                printf("\033[1;31mError: \033[0mCannot assign \033[1m\"%s\"\033[0m to \033[1m\"%s\"\033[0m (line %d)\n", $3->type_name, $1->type_name, yylineno);
+                                YYERROR;
+                        }
+                }
+
+                $$->size = $1->size;
+                $$->type_name = $1->type_name;
+                $$->struct_name = $1->struct_name;
+                $$->pointer = $1->pointer;
+                $$->offset = $1->offset;
         }
         ;
 
@@ -478,11 +503,21 @@ declaration
                         && $2->children[0]->type == AST_DIRECT_DECLARATOR && $2->children[0]->children[0]->type == AST_DECLARATOR 
                                 && $2->children[0]->children[0]->children[0]->type == AST_STAR_DECLARATOR)
                 {
-                        printf("\033[1;31mError: \033[0mPointer to function is not allowed (line %d)\n", yylineno);
-                        YYERROR;
-                }
+                                pop(stack);
 
-                if ($1->type == AST_TYPE_SPECIFIER && ($2->type == AST_IDENTIFIER || $2->type == AST_STAR_DECLARATOR))
+                                char *id1 = find_first_identifier($2->children[0]->children[0]);
+
+                                Symbol *symbol = create_symbol(id1, -1, FUNCTION_SYMBOL);
+                                push_symbol(stack, id1, symbol);
+
+                                add_return_symbol($$, symbol);
+
+                                function_arguments($2, symbol);
+
+                                symbol->pointer = true;
+                                symbol->type_name = "function";
+                }
+                else if ($1->type == AST_TYPE_SPECIFIER && ($2->type == AST_IDENTIFIER || $2->type == AST_STAR_DECLARATOR))
                 {
                         char *id = find_first_identifier($2);
 
@@ -510,6 +545,11 @@ declaration
                                         symbol->struct_name = id1;
                                 }
 
+                                if ($2->type == AST_STAR_DECLARATOR)
+                                {
+                                        symbol->pointer = true;
+                                }
+
                                 push_symbol(stack, id, symbol);
                                 
                                 $$->size = $1->size;
@@ -534,6 +574,8 @@ declaration
                                 Symbol *symbol = create_symbol(id, -1, FUNCTION_SYMBOL);
                                 push_symbol(stack, id, symbol);
 
+                                add_return_symbol($$, symbol);
+
                                 Ast_node *declarator = $2;
 
                                 if (declarator->type == AST_STAR_DECLARATOR)
@@ -542,6 +584,8 @@ declaration
                                 }
 
                                 function_arguments(declarator, symbol);
+
+                                symbol->type_name = "function";
                         }
 
                 }
@@ -679,7 +723,7 @@ struct_specifier
 
                 if (!s)
                 {
-                        printf("\033[1;31mError: \033[0mUnknown structure identifier \033[1m\"%s\"\033[0m (line %d)\n", $2->id, yylineno);
+                        printf("\033[1;31mError: \033[0mUnknown structure \033[1m\"%s\"\033[0m (line %d)\n", $2->id, yylineno);
                         YYERROR;
                 }
 
@@ -812,7 +856,12 @@ parameter_declaration
                                 Symbol *symbol = create_symbol(id1, -1, FUNCTION_SYMBOL);
                                 push_symbol(stack, id1, symbol);
 
+                                add_return_symbol($$, symbol);
+
                                 function_arguments($2->children[0], symbol);
+
+                                symbol->type_name = "function";
+                                symbol->pointer = true;
                         }
                         else
                         {
@@ -974,11 +1023,39 @@ jump_statement
         : RETURN ';'
         {
                 $$ = ast_create_node(AST_RETURN);
+
+                Symbol *s = lookup_stack(stack, current_function);
+
+                if (strcmp(s->children[0]->type_name, "void") != 0)
+                {
+                        printf("\033[1;31mError: \033[0mFunction \033[1m\"%s\"\033[0m expects a return value (line %d)\n", current_function, yylineno);
+                        YYERROR;
+                }
         }
         | RETURN expression ';'
         {
                 $$ = ast_create_node(AST_RETURN);
                 ast_add_child($$, $2);
+
+                Symbol *s = lookup_stack(stack, current_function);
+
+                if (!(s->children[0]->pointer && $2->pointer))
+                {
+                        if (strcmp(s->children[0]->type_name, $2->type_name) != 0)
+                        {
+                                printf("\033[1;31mError: \033[0mFunction \033[1m\"%s\"\033[0m expects a return value of type \033[1m\"%s\"\033[0m but got \033[1m\"%s\"\033[0m (line %d)\n", current_function, s->children[0]->type_name, $2->type_name, yylineno);
+                                YYERROR;
+                        }
+
+                        if (strcmp(s->children[0]->type_name, "struct") == 0)
+                        {
+                                if (strcmp(s->children[0]->struct_name, $2->struct_name) != 0)
+                                {
+                                        printf("\033[1;31mError: \033[0mFunction \033[1m\"%s\"\033[0m expects a return value of type \033[1m\"%s\"\033[0m but got \033[1m\"%s\"\033[0m (line %d)\n", current_function, s->children[0]->struct_name, $2->struct_name, yylineno);
+                                        YYERROR;
+                                }
+                        }
+                }
         }
         ;
 
@@ -1036,6 +1113,8 @@ function
 
                         Symbol *symbol = create_symbol(id, -1, FUNCTION_SYMBOL);
                         push_symbol_next(stack, id, symbol);
+
+                        add_return_symbol($$, symbol);
                                 
                         Ast_node *declarator = $2;
 
@@ -1045,6 +1124,10 @@ function
                         }
 
                         function_arguments(declarator, symbol);
+
+                        symbol->type_name = "function";
+
+                        current_function = id;
                 }
 
         }

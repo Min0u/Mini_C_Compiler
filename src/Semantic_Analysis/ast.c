@@ -749,8 +749,40 @@ void *tac_transformation(Ast_node *node)
         Ast_node *left = node->children[0];
         Ast_node *right = node->children[1];
 
-        if (left->type == AST_OP || right->type == AST_OP || left->type == AST_PRIMARY_EXPRESSION || right->type == AST_PRIMARY_EXPRESSION || left->type == AST_UNARY || right->type == AST_UNARY)
+        if (left->type == AST_OP || right->type == AST_OP 
+            || left->type == AST_PRIMARY_EXPRESSION 
+                || right->type == AST_PRIMARY_EXPRESSION || left->type == AST_UNARY 
+                    || right->type == AST_UNARY || left->type == AST_POSTFIX
+                        || right->type == AST_POSTFIX)
         {
+            if (left->type == AST_POSTFIX)
+            {
+                tac_transformation(left);
+
+                node->children[0] = split_node_into_temp_var(left, left->type_name, left->pointer);
+
+                node->children[0]->parent = node;
+            }
+
+            if (right->type == AST_POSTFIX)
+            {
+                tac_transformation(right);
+
+                node->children[1] = split_node_into_temp_var(right, right->type_name, right->pointer);
+
+                node->children[1]->parent = node;
+            }
+
+            if (left->type == AST_POSTFIX)
+            {
+                available_temporary(node, node->children[0]->id);
+            }
+
+            if (right->type == AST_POSTFIX)
+            {
+                available_temporary(node, node->children[1]->id);
+            }
+
             sethi_ullman(node);
 
             if (node->sethi_ullman > 0)
@@ -966,11 +998,8 @@ void print_complete_ast_helper(Ast_node *node, int indent)
     case AST_POSTFIX_POINTER:
         printf("Postfix Pointer\n");
         break;
-    case AST_POSTFIX_ARGUMENT:
-        printf("Postfix Argument\n");
-        break;
-    case AST_POSTFIX_NO_ARGUMENT:
-        printf("Postfix No Argument\n");
+    case AST_POSTFIX:
+        printf("Postfix\n");
         break;
     case AST_CONSTANT:
         printf("Constant : %d\n", node->value);

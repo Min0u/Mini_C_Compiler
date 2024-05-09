@@ -403,11 +403,26 @@ void write_code(Ast_node *node, FILE *file)
         }
         break;
     case AST_DECLARATION:
-        write_code(node->children[0], file);
-        if (node->children_count > 1)
+        
+
+        if (node->children[0]->type == AST_TYPE_SPECIFIER && node->children[1]->type == AST_DIRECT_DECLARATOR_END 
+             && node->children[1]->children[0]->type == AST_DIRECT_DECLARATOR && node->children[1]->children[0]->children[0]->type == AST_DECLARATOR 
+                && node->children[1]->children[0]->children[0]->children[0]->type == AST_STAR_DECLARATOR)
         {
-            fprintf(file, " ");
-            write_code(node->children[1], file);
+            fprintf(file, "void *");
+
+            char *id = find_first_identifier(node->children[1]->children[0]->children[0]);
+
+            fprintf(file, "%s", id);
+        }
+        else
+        {
+            write_code(node->children[0], file);
+            if (node->children_count > 1)
+            {
+                fprintf(file, " ");
+                write_code(node->children[1], file);
+            }
         }
         break;
     case AST_ASSIGNMENT:
@@ -488,15 +503,14 @@ void write_code(Ast_node *node, FILE *file)
         fprintf(file, "->");
         write_code(node->children[1], file);
         break;
-    case AST_POSTFIX_ARGUMENT:
+    case AST_POSTFIX:
         write_code(node->children[0], file);
         fprintf(file, "(");
-        write_code(node->children[1], file);
+        if (node->children_count > 1)
+        {
+            write_code(node->children[1], file);
+        }
         fprintf(file, ")");
-        break;
-    case AST_POSTFIX_NO_ARGUMENT:
-        write_code(node->children[0], file);
-        fprintf(file, "()");
         break;
     case AST_CONSTANT:
         fprintf(file, "%d", node->value);

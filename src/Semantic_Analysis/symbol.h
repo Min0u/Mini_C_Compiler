@@ -45,5 +45,6 @@ Symbol *lookup_symbol_child(Symbol *parent, char *key);
 
 // Create symbol for each argument of a function
 void function_arguments(Ast_node *node, Symbol *symbol);
+void add_return_symbol(Ast_node *node, Symbol *symbol);
 
 #endif

@@ -21,6 +21,11 @@ int print_1()
 	return 0;
 }
 
+int add(int a, int b)
+{
+  return a + b;
+}
+
 int main(int a) {
   struct Point *p;
   struct Point *p2;
@@ -48,8 +53,7 @@ int main(int a) {
   print_point(p);
   print_point(p->next);
   
-  /* Error: incompatible types */ 
-  print_point(s);
+  printd(add(1, 2));
 
   return 0;
 }

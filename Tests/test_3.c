@@ -7,6 +7,7 @@ int main(){
     i = 0;
 
     while (i < 10) {
+        /* Error: 'k' is not declared */
         printd(k);
         i = i + 2;
     }

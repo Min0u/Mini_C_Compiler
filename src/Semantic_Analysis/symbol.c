@@ -78,3 +78,34 @@ void function_arguments(Ast_node *node, Symbol *symbol)
         }
     }
 }
+
+void add_return_symbol(Ast_node *node, Symbol *symbol)
+{
+    Ast_node *child = node->children[0];
+    Ast_node *child2 = node->children[1];
+
+    Symbol *s = create_symbol("return", -1, IDENTIFIER_SYMBOL);
+
+    if (child->type == AST_TYPE_SPECIFIER)
+    {
+        s->type_name = strdup(child->id);
+        s->size = child->size;
+    }
+    else
+    {
+        s->type_name = strdup(child->children[0]->id);
+        s->size = child->children[0]->size;
+    }
+
+    if (strcmp(s->type_name, "struct") == 0)
+    {
+        s->struct_name = find_first_identifier(child);
+    }
+
+    if (child2->type == AST_STAR_DECLARATOR)
+    {
+        s->pointer = true;
+    }
+
+    add_symbol_child(symbol, s);
+}
