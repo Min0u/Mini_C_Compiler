@@ -122,7 +122,10 @@ void write_code(Ast_node *node, FILE *file)
             write_code(node->children[i], file);
             if (node->children[i]->type == AST_DECLARATION)
             {
-                fprintf(file, ";\n\n");
+                if (node->children[i]->children[0]->type != AST_STRUCT)
+                {
+                    fprintf(file, ";\n\n");
+                }
             }
             else
             {
@@ -335,7 +338,16 @@ void write_code(Ast_node *node, FILE *file)
     case AST_PARAMETER_DECLARATION:
         write_code(node->children[0], file);
         fprintf(file, " ");
-        write_code(node->children[1], file);
+        if (node->children[1]->type == AST_STAR_DECLARATOR && node->children[1]->children[0]->type == AST_DIRECT_DECLARATOR_END)
+        {
+            fprintf(file, "*");
+            char *id = find_first_identifier(node->children[1]->children[0]->children[0]);
+            fprintf(file, "%s", id);
+        }
+        else
+        {
+            write_code(node->children[1], file);
+        }
         break;
     case AST_PARAMETER_LIST:
         for (int i = 0; i < node->children_count; i++)
@@ -368,12 +380,6 @@ void write_code(Ast_node *node, FILE *file)
         fprintf(file, "*");
         write_code(node->children[0], file);
         break;
-    case AST_STRUCT_DECLARATION:
-        if (node->children_count == 1)
-        {
-            fprintf(file, "void");
-        }
-        break;
     case AST_STRUCT_DECLARATION_LIST:
         for (int i = 0; i < node->children_count; i++)
         {
@@ -384,36 +390,16 @@ void write_code(Ast_node *node, FILE *file)
             depth--;
         }
         break;
-    case AST_STRUCT_SPECIFIER:
-        if (node->children_count == 1)
-        {
-            fprintf(file, "{\n");
-            depth++;
-            tab_depth(file);
-            write_code(node->children[0], file);
-            depth--;
-            tab_depth(file);
-            fprintf(file, "}");
-        }
-        else if (node->children_count == 2)
-        {
-            write_code(node->children[0], file);
-            tab_depth(file);
-            fprintf(file, "{\n");
-            depth++;
-            tab_depth(file);
-            write_code(node->children[1], file);
-            depth--;
-            tab_depth(file);
-            fprintf(file, "}");
-        }
-        break;
     case AST_TYPE_SPECIFIER:
-        fprintf(file, "%s", node->id);
+
+
         if (node->children_count > 0)
         {
-            fprintf(file, " ");
             write_code(node->children[0], file);
+        }
+        else
+        {
+            fprintf(file, "%s", node->id);
         }
         break;
     case AST_DECLARATION:
@@ -479,17 +465,7 @@ void write_code(Ast_node *node, FILE *file)
         fprintf(file, "%s", node->id);
         break;
     case AST_UNARY_SIZEOF:
-        fprintf(file, "sizeof");
-        if (node->children[0]->type == AST_TYPE_SPECIFIER)
-        {
-            fprintf(file, "(");
-            write_code(node->children[0], file);
-            fprintf(file, ")");
-        }
-        else
-        {
-            write_code(node->children[0], file);
-        }
+        fprintf(file, "%d", node->size);
         break;
     case AST_UNARY:
         for (int i = 0; i < node->children_count; i++)
@@ -510,11 +486,6 @@ void write_code(Ast_node *node, FILE *file)
     case AST_POSTFIX_POINTER:
         write_code(node->children[0], file);
         fprintf(file, "->");
-        write_code(node->children[1], file);
-        break;
-    case AST_POSTFIX_IDENTIFIER:
-        write_code(node->children[0], file);
-        fprintf(file, ".");
         write_code(node->children[1], file);
         break;
     case AST_POSTFIX_ARGUMENT:
@@ -538,12 +509,11 @@ void write_code(Ast_node *node, FILE *file)
         write_code(node->children[0], file);
         fprintf(file, ")");
         break;
-    case AST_STRUCT_VARIABLE_SPECIFIER:
-        fprintf(file, "struct ");
-        write_code(node->children[0], file);
-        fprintf(file, "{\n");
-        write_code(node->children[1], file);
-        fprintf(file, "}");
+    case AST_STRUCT:
+        if (node->children_count == 1)
+        {
+            fprintf(file, "void");
+        }
         break;
     default:
         fprintf(file, "Unknown");

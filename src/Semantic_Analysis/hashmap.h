@@ -30,4 +30,6 @@ void insert(Hash_map *map, char *key, Symbol *value);
 // Lookup a key in the hash map
 Symbol *lookup(Hash_map *map, char *key);
 
+void print_hashmap(Hash_map *map);
+
 #endif

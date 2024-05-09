@@ -39,4 +39,6 @@ Symbol *lookup_stack(Stack *s, char *key);
 // Look for a key on top of the stack
 Symbol *lookup_stack_top(Stack *s, char *key);
 
+void print_stack(Stack *s);
+
 #endif

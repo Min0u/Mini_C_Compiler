@@ -26,6 +26,9 @@ Ast_node *ast_create_node(Ast_type type)
 
     node->sethi_ullman = 0;
 
+    node->struct_name = NULL;
+    node->pointer = false;
+
     return node;
 }
 
@@ -388,9 +391,9 @@ void available_temporary(Ast_node *node, char *name)
     for (int i = 0; i < list->children_count; i++)
     {
         // If the node is an identifier & name = same as the name we are looking for => mark it as available
-        if (list->children[i]->children[1]->type == AST_IDENTIFIER)
+        if (list->children[i]->type == AST_DECLARATION)
         {
-            char *temp_name = list->children[i]->children[1]->id;
+            char *temp_name = find_first_identifier(list->children[i]->children[1]);
             if (strcmp(temp_name, name) == 0)
             {
                 list->children[i]->children[1]->available = true;
@@ -735,7 +738,7 @@ void *tac_transformation(Ast_node *node)
             node->children[1] = split_node_into_var(node->children[1]->children[1], node->children[1]->children[0]->id);
         }
 
-        if (node->children[1]->type == AST_STAR_DECLARATOR && node->children[0]->type != AST_CONSTANT && node->children[0]->type != AST_IDENTIFIER)
+        if (node->children[0]->type == AST_STAR_DECLARATOR && node->children[1]->type != AST_CONSTANT && node->children[1]->type != AST_IDENTIFIER)
         {
             node->children[1] = split_node_into_temp_var(node->children[1], "int", false);
         }
@@ -827,7 +830,7 @@ void *tac_transformation(Ast_node *node)
 
         Ast_node *identifier_3 = create_id_leaf(strdup(name));
 
-        ast_add_child(node, identifier_3);
+        node->children[0] = identifier_3;
 
         available_temporary(node, name);
 
@@ -924,14 +927,8 @@ void print_complete_ast_helper(Ast_node *node, int indent)
     case AST_DIRECT_DECLARATOR_END:
         printf("Direct Declarator End\n");
         break;
-    case AST_STRUCT_DECLARATION:
-        printf("Struct Declaration\n");
-        break;
     case AST_STRUCT_DECLARATION_LIST:
         printf("Struct Declaration List\n");
-        break;
-    case AST_STRUCT_SPECIFIER:
-        printf("Struct Specifier\n");
         break;
     case AST_TYPE_SPECIFIER:
         printf("Type Specifier : %s\n", node->id);
@@ -969,9 +966,6 @@ void print_complete_ast_helper(Ast_node *node, int indent)
     case AST_POSTFIX_POINTER:
         printf("Postfix Pointer\n");
         break;
-    case AST_POSTFIX_IDENTIFIER:
-        printf("Postfix Identifier\n");
-        break;
     case AST_POSTFIX_ARGUMENT:
         printf("Postfix Argument\n");
         break;
@@ -993,11 +987,11 @@ void print_complete_ast_helper(Ast_node *node, int indent)
     case AST_STAR_DECLARATOR:
         printf("Star Declarator\n");
         break;
-    case AST_STRUCT_VARIABLE_SPECIFIER:
-        printf("Struct Variable Specifier\n");
-        break;
     case AST_EXT_DECLARATION:
         printf("External Declaration\n");
+        break;
+    case AST_STRUCT:
+        printf("Struct\n");
         break;
     default:
         printf("Unknown\n");

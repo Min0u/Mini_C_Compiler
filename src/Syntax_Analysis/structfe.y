@@ -77,15 +77,23 @@ primary_expression
                 }
 
                 $1->size = sym->size;
+                $1->type_name = sym->type_name;
+                $1->struct_name = sym->struct_name;
         }
         | CONSTANT
         {
                 $$ = $1;
+
+                $$->size = 4;
+                $$->type_name = "int";
         }
         | '(' expression ')'
         {
                 $$ = ast_create_node(AST_PRIMARY_EXPRESSION);
                 ast_add_child($$, $2);
+
+                $$->size = $2->size;
+                $$->type_name = $2->type_name;
         }
         ;
 
@@ -98,24 +106,107 @@ postfix_expression
         {
                 $$ = ast_create_node(AST_POSTFIX_NO_ARGUMENT);
                 ast_add_child($$, $1);
+
+                char *id = find_first_identifier($1);
+
+                Symbol *sym = lookup_stack(stack, id);
+
+                if (sym->type != FUNCTION_SYMBOL)
+                {
+                        printf("\033[1;31mError:\033[0m \033[1m\"%s\"\033[0m is not a function (line %d)\n", id, yylineno);
+                        YYERROR;
+                }
+
+                if (sym->child_count != 0)
+                {
+                        printf("\033[1;31mError: \033[0mFunction \033[1m\"%s\"\033[0m requires %d arguments but none were given (line %d)\n", id, sym->child_count, yylineno);
+                        YYERROR;
+                }
+
+                $$->type_name = "int";
         }
         | postfix_expression '(' argument_expression_list ')'
         {
                 $$ = ast_create_node(AST_POSTFIX_ARGUMENT);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
-        }
-        | postfix_expression '.' IDENTIFIER
-        {
-                $$ = ast_create_node(AST_POSTFIX_IDENTIFIER);
-                ast_add_child($$, $1);
-                ast_add_child($$, $3);
+
+                char *id = find_first_identifier($1);
+
+                Symbol *sym = lookup_stack(stack, id);
+
+                if (sym->type != FUNCTION_SYMBOL)
+                {
+                        printf("\033[1;31mError:\033[0m \033[1m\"%s\"\033[0m is not a function (line %d)\n", id, yylineno);
+                        YYERROR;
+                }
+
+                if ($3->children_count != 0)
+                {
+                        if (sym->child_count != $3->children_count)
+                        {
+                                printf("\033[1;31mError: \033[0mFunction \033[1m\"%s\"\033[0m requires %d arguments but %d were given (line %d)\n", id, sym->child_count, $3->children_count, yylineno);
+                                YYERROR;
+                        }
+                }
+
+                $$->type_name = "int";
+
+                for (int i = 0; i < $3->children_count; i++)
+                {
+                        Ast_node *argument = $3->children[i];
+
+                        if (sym->pointer)
+                        {
+                                continue;
+                        }
+
+                        if (strcmp(sym->children[i]->type_name, argument->type_name) != 0)
+                        {
+                                printf("\033[1;31mError: \033[0mExpected argument of type \033[1m\"%s\"\033[0m but got \033[1m\"%s\"\033[0m (line %d)\n", sym->children[i]->type_name, argument->type_name, yylineno);
+                                YYERROR;
+                        }
+
+                        if (strcmp(argument->type_name, "struct") == 0)
+                        {
+                                if (strcmp(sym->children[i]->struct_name, argument->struct_name) != 0)
+                                {
+                                        printf("yes\n");
+                                        printf("\033[1;31mError: \033[0mExpected argument of type \033[1m\"%s\"\033[0m but got \033[1m\"%s\"\033[0m (line %d)\n", sym->children[i]->struct_name, argument->struct_name, yylineno);
+                                        YYERROR;
+                                }
+                        }
+                }
         }
         | postfix_expression PTR_OP IDENTIFIER
         {
                 $$ = ast_create_node(AST_POSTFIX_POINTER);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
+
+                char *id = find_first_identifier($1);
+
+                Symbol *sym = lookup_stack(stack, id);
+
+                if (strcmp(sym->type_name, "struct") != 0)
+                {
+                        printf("\033[1;31mError: \033[0mUnknown struct member \033[1m\"%s\"\033[0m (line %d)\n", $3->id, yylineno);
+                        YYERROR;
+                }
+
+                Symbol *s = lookup_stack(stack, sym->struct_name);
+                Symbol *s1 = lookup_symbol_child(s, $3->id);
+
+                if (!s1)
+                {
+                        printf("\033[1;31mError: \033[0mUnknown struct member \033[1m\"%s\"\033[0m (line %d)\n", $3->id, yylineno);
+                        YYERROR;
+                }
+
+                $$->offset = s1->offset;
+                $$->type_name = s1->type_name;
+                $$->size = s1->size;
+                $$->struct_name = s1->struct_name;
         }
         ;
 
@@ -142,6 +233,14 @@ unary_expression
                 $$ = ast_create_node(AST_UNARY);
                 ast_add_child($$, $1);
                 ast_add_child($$, $2);
+
+                if (strcmp($1->id, "&") == 0)
+                {
+                        $$->pointer = true;
+                }
+
+                $$->size = $2->size;
+                $$->type_name = $2->type_name;
         }
         | SIZEOF unary_expression
         {
@@ -155,6 +254,8 @@ unary_expression
                 {
                         $$->size = sym->size;
                 }
+
+                $$->type_name = "int";
         }
         | SIZEOF '(' type_specifier ')'
         {
@@ -176,6 +277,8 @@ unary_expression
                                 $$->size = $3->size;
                         }
                 }
+
+                $$->type_name = "int";
         }
         ;
 
@@ -212,6 +315,7 @@ multiplicative_expression
                 ast_add_child($$, $3);
 
                 $$->id = "*";
+                $$->type_name = "int";
         }
         | multiplicative_expression '/' unary_expression
         {
@@ -220,6 +324,7 @@ multiplicative_expression
                 ast_add_child($$, $3);
 
                 $$->id = "/";
+                $$->type_name = "int";
         }
         ;
 
@@ -235,6 +340,7 @@ additive_expression
                 ast_add_child($$, $3);
 
                 $$->id = "+";
+                $$->type_name = "int";
         }
         | additive_expression '-' multiplicative_expression
         {
@@ -243,6 +349,7 @@ additive_expression
                 ast_add_child($$, $3);
 
                 $$->id = "-";
+                $$->type_name = "int";
         }
         ;
 
@@ -258,6 +365,7 @@ relational_expression
                 ast_add_child($$, $3);
 
                 $$->id = "<";
+                $$->type_name = "int";
 
         }
         | relational_expression '>' additive_expression
@@ -267,6 +375,7 @@ relational_expression
                 ast_add_child($$, $3);
 
                 $$->id = ">";
+                $$->type_name = "int";
         }
         | relational_expression LE_OP additive_expression
         {
@@ -275,6 +384,7 @@ relational_expression
                 ast_add_child($$, $3);
 
                 $$->id = "<=";
+                $$->type_name = "int";
         }
         | relational_expression GE_OP additive_expression
         {
@@ -283,6 +393,7 @@ relational_expression
                 ast_add_child($$, $3);
 
                 $$->id = ">=";
+                $$->type_name = "int";
         }
         ;
 
@@ -298,6 +409,7 @@ equality_expression
                 ast_add_child($$, $3);
 
                 $$->id = "==";
+                $$->type_name = "int";
         }
         | equality_expression NE_OP relational_expression
         {
@@ -306,6 +418,7 @@ equality_expression
                 ast_add_child($$, $3);
 
                 $$->id = "!=";
+                $$->type_name = "int";
         }
         ;
 
@@ -321,6 +434,7 @@ logical_and_expression
                 ast_add_child($$, $3);
 
                 $$->id = "&&";
+                $$->type_name = "int";
         }
         ;
 
@@ -336,6 +450,7 @@ logical_or_expression
                 ast_add_child($$, $3);
 
                 $$->id = "||";
+                $$->type_name = "int";
         }
         ;
 
@@ -359,6 +474,14 @@ declaration
                 ast_add_child($$, $1);
                 ast_add_child($$, $2);
 
+                if ($1->type == AST_TYPE_SPECIFIER && $2->type == AST_DIRECT_DECLARATOR_END 
+                        && $2->children[0]->type == AST_DIRECT_DECLARATOR && $2->children[0]->children[0]->type == AST_DECLARATOR 
+                                && $2->children[0]->children[0]->children[0]->type == AST_STAR_DECLARATOR)
+                {
+                        printf("\033[1;31mError: \033[0mPointer to function is not allowed (line %d)\n", yylineno);
+                        YYERROR;
+                }
+
                 if ($1->type == AST_TYPE_SPECIFIER && ($2->type == AST_IDENTIFIER || $2->type == AST_STAR_DECLARATOR))
                 {
                         char *id = find_first_identifier($2);
@@ -379,10 +502,17 @@ declaration
                                 }
                                 
                                 Symbol *symbol = create_symbol(id, $1->size, IDENTIFIER_SYMBOL);
+                                symbol->type_name = $1->id;
+
+                                if (strcmp($1->id, "struct") == 0)
+                                {
+                                        char *id1 = find_first_identifier($1);
+                                        symbol->struct_name = id1;
+                                }
+
                                 push_symbol(stack, id, symbol);
-
+                                
                                 $$->size = $1->size;
-
                         }
                 } 
                 else if ($1->type == AST_EXT_DECLARATION || $2->type == AST_DIRECT_DECLARATOR_END)
@@ -403,7 +533,17 @@ declaration
 
                                 Symbol *symbol = create_symbol(id, -1, FUNCTION_SYMBOL);
                                 push_symbol(stack, id, symbol);
+
+                                Ast_node *declarator = $2;
+
+                                if (declarator->type == AST_STAR_DECLARATOR)
+                                {
+                                        declarator = declarator->children[0];
+                                }
+
+                                function_arguments(declarator, symbol);
                         }
+
                 }
         }
         | struct_specifier ';'
@@ -475,7 +615,7 @@ struct_identifier
 struct_specifier
         : struct_identifier open_brace struct_declaration_list close_brace
         {
-                $$ = ast_create_node(AST_STRUCT_VARIABLE_SPECIFIER);
+                $$ = ast_create_node(AST_STRUCT);
                 ast_add_child($$, $1);
                 ast_add_child($$, $3);
 
@@ -485,12 +625,21 @@ struct_specifier
 
                 int offset = 0;
 
+                $$->size = $3->size;
+
+                s->size = $3->size;
+
                 for (int i = 0; i < $3->children_count; i++)
                 {
                         Ast_node *declaration = $3->children[i];
                         Ast_node *declarator = declaration->children[1];
 
-                        declaration->offset = offset;
+                        if (declaration->size == 0)
+                        {
+                                declaration->size = s->size;
+                        }
+                        
+                        declarator->offset = offset;
                         offset += declaration->size;
 
                         char *id1 = find_first_identifier(declarator);
@@ -504,25 +653,27 @@ struct_specifier
                                 s1->type_name = declaration->children[0]->id;
                         }
 
-                        declaration->children[0]->offset = declaration->offset;
+                        if (declaration->children[1]->type == AST_STAR_DECLARATOR)
+                        {
+                                s1->pointer = true;
+                        }
+
+                        s1->offset = declarator->offset;
 
                         add_symbol_child(s, s1);
                 }
-
-                $$->size = $3->size;
-
-                s->size = $3->size;
         }
         | STRUCT open_brace struct_declaration_list close_brace
         {
-                $$ = ast_create_node(AST_STRUCT_SPECIFIER);
+                $$ = ast_create_node(AST_STRUCT);
                 ast_add_child($$, $3);
 
                 $$->size = $3->size;
         }
         | STRUCT IDENTIFIER
         {
-                $$ = $2;
+                $$ = ast_create_node(AST_STRUCT);
+                ast_add_child($$, $2);
 
                 Symbol *s = lookup_stack(stack, $2->id);
 
@@ -562,7 +713,7 @@ struct_declaration_list
 struct_declaration
         : type_specifier declarator ';'
         {
-                $$ = ast_create_node(AST_STRUCT_DECLARATION);
+                $$ = ast_create_node(AST_DECLARATION);
                 ast_add_child($$, $1);
                 ast_add_child($$, $2);
 
@@ -652,8 +803,37 @@ parameter_declaration
                                 print_warning(s2, id, yylineno);
                         }
 
-                        Symbol *symbol = create_symbol(id, 4, IDENTIFIER_SYMBOL);
-                        push_symbol(stack, id, symbol);
+                        if ($1->type == AST_TYPE_SPECIFIER && $2->type == AST_STAR_DECLARATOR && $2->children[0]->type == AST_DIRECT_DECLARATOR_END)
+                        {
+                                pop(stack);
+
+                                char *id1 = find_first_identifier($2->children[0]->children[0]);
+
+                                Symbol *symbol = create_symbol(id1, -1, FUNCTION_SYMBOL);
+                                push_symbol(stack, id1, symbol);
+
+                                function_arguments($2->children[0], symbol);
+                        }
+                        else
+                        {
+                                Symbol *symbol = create_symbol(id, 4, IDENTIFIER_SYMBOL);
+
+                                symbol->type_name = $1->id;
+
+                                if (strcmp($1->id, "struct") == 0)
+                                {
+                                        char *id1 = find_first_identifier($1);
+                                        symbol->struct_name = id1;
+                                }
+
+                                if ($2->type == AST_STAR_DECLARATOR)
+                                {
+                                        symbol->pointer = true;
+                                }
+
+                                push_symbol(stack, id, symbol);
+                        }
+                                
                 }
         }
         ;
@@ -806,7 +986,7 @@ main_program
         : program
         {
                 tac_transformation($1);
-//                print_complete_ast($1);
+               //print_complete_ast($1);
                 write_code($1, yyout);
                 free_ast($1);
         }
@@ -856,6 +1036,15 @@ function
 
                         Symbol *symbol = create_symbol(id, -1, FUNCTION_SYMBOL);
                         push_symbol_next(stack, id, symbol);
+                                
+                        Ast_node *declarator = $2;
+
+                        if (declarator->type == AST_STAR_DECLARATOR)
+                        {
+                                declarator = declarator->children[0];
+                        }
+
+                        function_arguments(declarator, symbol);
                 }
 
         }

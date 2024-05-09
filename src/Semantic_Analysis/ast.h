@@ -31,9 +31,8 @@ typedef enum _Ast_type
     AST_PARAMETER_LIST,
     AST_DIRECT_DECLARATOR,
     AST_DIRECT_DECLARATOR_END,
-    AST_STRUCT_DECLARATION,
     AST_STRUCT_DECLARATION_LIST,
-    AST_STRUCT_SPECIFIER,
+    AST_STRUCT,
     AST_TYPE_SPECIFIER,
     AST_DECLARATION,
     AST_ASSIGNMENT,
@@ -46,7 +45,6 @@ typedef enum _Ast_type
     AST_UNARY,
     AST_ARGUMENT_EXPRESSION_LIST,
     AST_POSTFIX_POINTER,
-    AST_POSTFIX_IDENTIFIER,
     AST_POSTFIX_ARGUMENT,
     AST_POSTFIX_NO_ARGUMENT,
     AST_CONSTANT,
@@ -54,7 +52,6 @@ typedef enum _Ast_type
     AST_PRIMARY_EXPRESSION,
     AST_DECLARATOR,
     AST_STAR_DECLARATOR,
-    AST_STRUCT_VARIABLE_SPECIFIER,
     AST_EXT_DECLARATION,
 } Ast_type;
 
@@ -83,6 +80,10 @@ typedef struct _Ast_node
 
     // Sethi-Ullman number
     int sethi_ullman;
+
+    // Error
+    char *struct_name;
+    bool pointer;
 } Ast_node;
 
 Ast_node *ast_create_node(Ast_type type);

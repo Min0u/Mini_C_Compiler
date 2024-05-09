@@ -25,13 +25,6 @@ void push_symbol(Stack *s, char *key, Symbol *value)
 void push_symbol_next(Stack *s, char *key, Symbol *value)
 {
     Stack_node *node = s->top->next;
-    if (node == NULL)
-    {
-        node = (Stack_node *)malloc(sizeof(Stack_node));
-        node->map = create_hash_map();
-        node->next = NULL;
-        s->top->next = node;
-    }
     insert(node->map, key, value);
 }
 
@@ -84,4 +77,19 @@ Symbol *lookup_stack(Stack *s, char *key)
 Symbol *lookup_stack_top(Stack *s, char *key)
 {
     return lookup(peek(s), key);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+void print_stack(Stack *s)
+{//decale pour chaque hashmap
+    Stack_node *node = s->top;
+    while (node != NULL)
+    {
+        printf("Stack node:\n");
+        print_hashmap(node->map);
+        printf("\n");
+        node = node->next;
+    }
+
 }
