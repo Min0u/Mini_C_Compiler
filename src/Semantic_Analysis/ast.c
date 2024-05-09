@@ -645,7 +645,7 @@ void sethi_ullman(Ast_node *node)
 ////////////////////////////////////////////////////////////////////////////////////////
 
 // Transform the AST into TAC (Three Address Code)
-void *tac_transformation(Ast_node *node)
+void tac_transformation(Ast_node *node)
 {
     switch (node->type)
     {

@@ -127,7 +127,7 @@ int split_op(Ast_node *node, char *tab[], bool tab_bool[], int n);
 void sethi_ullman(Ast_node *node);
 
 // Transform the AST to TAC (Three Address Code)
-void *tac_transformation(Ast_node *node);
+void tac_transformation(Ast_node *node);
 
 void free_ast(Ast_node *root);
 

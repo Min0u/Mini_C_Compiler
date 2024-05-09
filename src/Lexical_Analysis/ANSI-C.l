@@ -1,4 +1,5 @@
-%option noyywrap
+%option noyywrap nounput noinput batch
+%option yylineno
 
 %{
 
