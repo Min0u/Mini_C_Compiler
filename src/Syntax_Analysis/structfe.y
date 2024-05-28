@@ -1063,7 +1063,7 @@ main_program
         : program
         {
                 tac_transformation($1);
-                print_complete_ast($1);
+//                print_complete_ast($1);
                 write_code($1, yyout);
                 free_ast($1);
         }
