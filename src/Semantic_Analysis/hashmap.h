@@ -16,6 +16,7 @@ typedef struct _Hash_node {
     struct _Hash_node *next;
 } Hash_node;
 
+// Linked list of hash nodes
 typedef struct _Hash_map {
     Hash_node *buckets[HASH_SIZE];
 } Hash_map;

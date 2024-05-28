@@ -9,12 +9,14 @@
 #include "hashmap.h"
 #include "symbol.h"
 
+// Stack_node is a node of the stack, it contains a pointer to a hash_map and a pointer to the next node
 typedef struct _Stack_node
 {
     struct _Hash_map *map;
     struct _Stack_node *next;
 } Stack_node;
 
+// Linked list of stack_node
 typedef struct _Stack
 {
     struct _Stack_node *top;

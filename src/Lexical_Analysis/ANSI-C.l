@@ -20,7 +20,7 @@ comment \/\*([^*]|\*[^/])*\*\/
 
 {comment} { /* ignore les commentaires */ }
 
-{const} { yylval.node = create_int_leaf(atoi(yytext)); return CONSTANT; }
+{const} { yylval.node = create_int_leaf(atoi(yytext)); return CONSTANT; /* yylval.node becomes the value of the constant */ }
 
 extern { return EXTERN; }
 int	{ return INT; }
@@ -56,7 +56,7 @@ sizeof { return SIZEOF; }
 \; { return ';'; }
 \, { return ','; }
 
-{id} { yylval.node = create_id_leaf(strdup(yytext)); return IDENTIFIER; }
+{id} { yylval.node = create_id_leaf(strdup(yytext)); return IDENTIFIER; /* yylval.node becomes the value of the identifier */ }
 
 [\t \v \f ]+ { /* ignore spaces */ }
 \n { yylineno++; }

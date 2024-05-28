@@ -405,6 +405,7 @@ void available_temporary(Ast_node *node, char *name)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
+// Put the node into a variable
 Ast_node *split_node_into_var(Ast_node *node, char *name)
 {
     if (node == NULL)
@@ -441,9 +442,10 @@ Ast_node *split_node_into_temp_var(Ast_node *node, char *type, bool pointer)
         return NULL;
     }
 
-    // Get a temporary variable
+    // Get a node with an temporary inside
     Ast_node *temp = get_temporary(node, type, pointer);
 
+    // Get the id of the temporary
     char *id = find_first_identifier(temp);
 
     // Split the node into a temporary variable
@@ -452,6 +454,8 @@ Ast_node *split_node_into_temp_var(Ast_node *node, char *type, bool pointer)
     return res;
 }
 
+// Split the operation node into temporary variables
+// Return the index of the temporary variable
 int split_op(Ast_node *node, char *var[], bool used[], int n)
 {
     if (node == NULL)

@@ -108,7 +108,7 @@ Ast_node *find_available_temporary(Ast_node *node, char *type, bool pointer);
 // Find the first identifier starting from a node
 char *find_first_identifier(Ast_node *node);
 
-// Get an available temporary variable
+// Get an available temporary variable, create a new one if none is available
 Ast_node *get_temporary(Ast_node *node, char *type, bool pointer);
 // Get all available temporary variables
 char **get_all_temporaries(Ast_node *node, int *count);
@@ -116,11 +116,11 @@ char **get_all_temporaries(Ast_node *node, int *count);
 // Mark a temporary variable as available
 void available_temporary(Ast_node *node, char *name);
 
-// Add a variable to the declaration list
+// Add a variable to the statement list, and return the variable that we'll use to replace the node
 Ast_node *split_node_into_var(Ast_node *node, char *name);
-// Add a temporary variable to the declaration list
+// Add a temporary variable to the declaration list, if a temporary variable is already available, it is used otherwise a new one is created
 Ast_node *split_node_into_temp_var(Ast_node *node, char *type, bool pointer);
-// Get the index of a variable
+// Split a node into a temporary variable and return the index of the temporary variable
 int split_op(Ast_node *node, char *tab[], bool tab_bool[], int n);
 
 // Sethi-Ullman

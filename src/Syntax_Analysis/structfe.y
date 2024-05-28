@@ -57,7 +57,7 @@ exit(SYNTAX_ERROR);
 %left '+' '-'
 %left '*' '/'
 
-%nonassoc ELSE_PRIORITY
+%nonassoc ELSE_THEN
 %nonassoc ELSE
 
 %start main_program
@@ -987,13 +987,13 @@ expression_statement
         ;
 
 selection_statement
-        : IF '(' expression ')' statement %prec ELSE_PRIORITY
+        : IF '(' expression ')' statement %prec ELSE_THEN
         {
                 $$ = ast_create_node(AST_IF);
                 ast_add_child($$, $3);
                 ast_add_child($$, $5);
         }
-        | IF '(' expression ')' statement ELSE statement %prec ELSE
+        | IF '(' expression ')' statement ELSE statement
         {
                 $$ = ast_create_node(AST_IF_ELSE);
                 ast_add_child($$, $3);
@@ -1063,7 +1063,7 @@ main_program
         : program
         {
                 tac_transformation($1);
-               //print_complete_ast($1);
+                print_complete_ast($1);
                 write_code($1, yyout);
                 free_ast($1);
         }
