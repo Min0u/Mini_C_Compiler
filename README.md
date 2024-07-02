@@ -65,7 +65,7 @@ STRUCIT-frontend :
 ```
 bison -Wcounterexamples -o src/build/FE/y.tab.c -d src/Syntax_Analysis/structfe.y
 flex -o src/build/FE/lex.yy.c src/Lexical_Analysis/ANSI-C.l
-gcc -o src/build/FE/strucit_frontend src/Semantic_Analysis/ast.c src/Semantic_Analysis/code.c src/Semantic_Analysis/symbol_table.c src/Semantic_Analysis/error.c src/Semantic_Analysis/stack.c src/Semantic_Analysis/utils.c src/build/FE/y.tab.c src/build/FE/lex.yy.c -g -lfl -W -Wall -Wextra -Wpedantic
+gcc -o src/build/FE/strucit_frontend src/Semantic_Analysis/ast.c src/Semantic_Analysis/code.c src/Semantic_Analysis/symbol_table.c src/Semantic_Analysis/stack.c src/Semantic_Analysis/utils.c src/build/FE/y.tab.c src/build/FE/lex.yy.c -g -lfl -W -Wall -Wextra -Wpedantic
 ```
 
 To compile the STRUCIT-frontend file, use the following command : 
